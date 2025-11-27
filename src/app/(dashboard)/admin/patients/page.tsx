@@ -39,7 +39,7 @@ export default async function PatientsPage() {
                                     </div>
                                     <div className="flex items-center space-x-4">
                                         {patient.pregnancies[0] ? (
-                                            <Badge variant={patient.pregnancies[0].riskLevel === 'HIGH' ? 'destructive' : 'secondary'}>
+                                            <Badge variant="secondary">
                                                 Week {patient.pregnancies[0].currentWeek}
                                             </Badge>
                                         ) : (
