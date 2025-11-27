@@ -77,9 +77,8 @@ export default async function DoctorPatientsPage() {
                                                 </div>
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-muted-foreground">Risk Level:</span>
-                                                    <Badge variant={activePregnancy.riskLevel === 'HIGH' ? 'destructive' : activePregnancy.riskLevel === 'MEDIUM' ? 'secondary' : 'default'}
-                                                        className={activePregnancy.riskLevel === 'LOW' ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
-                                                        {activePregnancy.riskLevel || 'N/A'}
+                                                    <Badge variant="secondary">
+                                                        N/A
                                                     </Badge>
                                                 </div>
                                                 {latestVital && (

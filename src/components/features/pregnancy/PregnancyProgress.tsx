@@ -117,25 +117,7 @@ export function PregnancyProgress({ pregnancy }: PregnancyProgressProps) {
                     </div>
                 </div>
 
-                {/* Risk Level */}
-                {pregnancy.riskLevel && (
-                    <div className="rounded-lg border p-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Risk Level</span>
-                            <Badge
-                                variant={
-                                    pregnancy.riskLevel === "HIGH"
-                                        ? "destructive"
-                                        : pregnancy.riskLevel === "MEDIUM"
-                                            ? "default"
-                                            : "secondary"
-                                }
-                            >
-                                {pregnancy.riskLevel}
-                            </Badge>
-                        </div>
-                    </div>
-                )}
+                {/* Risk Level temporarily disabled */}
             </CardContent>
         </Card>
     )

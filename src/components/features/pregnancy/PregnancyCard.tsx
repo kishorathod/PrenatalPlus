@@ -75,22 +75,7 @@ export function PregnancyCard({ pregnancy, onEdit }: PregnancyCardProps) {
                         </div>
                     )}
 
-                    {pregnancy.riskLevel && (
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Risk Level</span>
-                            <Badge
-                                variant={
-                                    pregnancy.riskLevel === "HIGH"
-                                        ? "destructive"
-                                        : pregnancy.riskLevel === "MEDIUM"
-                                            ? "default"
-                                            : "secondary"
-                                }
-                            >
-                                {pregnancy.riskLevel}
-                            </Badge>
-                        </div>
-                    )}
+                    {/* Risk Level temporarily disabled */}
                 </div>
 
                 {onEdit && (

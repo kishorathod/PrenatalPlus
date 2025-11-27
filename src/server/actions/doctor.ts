@@ -25,16 +25,9 @@ export async function getDoctorPatients() {
                     },
                     take: 1,
                 },
-                vitalReadings: {
-                    orderBy: {
-                        recordedAt: "desc",
-                    },
-                    take: 1,
-                },
                 _count: {
                     select: {
                         appointments: true,
-                        vitalReadings: true,
                     },
                 },
             },
@@ -57,10 +50,9 @@ export async function getDoctorUpcomingAppointments() {
     }
 
     try {
-        // Workaround: Query by doctorName since doctorId column is missing/unreliable
         const appointments = await prisma.appointment.findMany({
             where: {
-                doctorName: session.user.name, // Use name instead of ID
+                doctorName: session.user.name,
                 date: {
                     gte: new Date(),
                 },
@@ -86,10 +78,9 @@ export async function getDoctorUpcomingAppointments() {
             take: 10,
         })
 
-        // Map user to patient to match expected interface if needed, or update usage
         const formattedAppointments = appointments.map(apt => ({
             ...apt,
-            appointmentDate: apt.date, // Backwards compatibility for now
+            appointmentDate: apt.date,
             patient: apt.user
         }))
 
@@ -107,7 +98,7 @@ export async function getDoctorStats() {
     }
 
     try {
-        const [totalPatients, todayAppointments, highRiskCount] = await Promise.all([
+        const [totalPatients, todayAppointments] = await Promise.all([
             prisma.user.count({
                 where: {
                     role: "PATIENT",
@@ -115,17 +106,11 @@ export async function getDoctorStats() {
             }),
             prisma.appointment.count({
                 where: {
-                    doctorName: session.user.name, // Use name instead of ID
+                    doctorName: session.user.name,
                     date: {
                         gte: new Date(new Date().setHours(0, 0, 0, 0)),
                         lt: new Date(new Date().setHours(23, 59, 59, 999)),
                     },
-                },
-            }),
-            prisma.pregnancy.count({
-                where: {
-                    status: "ACTIVE",
-                    riskLevel: "HIGH",
                 },
             }),
         ])
@@ -134,7 +119,7 @@ export async function getDoctorStats() {
             stats: {
                 totalPatients,
                 todayAppointments,
-                highRiskCount,
+                highRiskCount: 0,
             },
             error: null,
         }
@@ -145,103 +130,18 @@ export async function getDoctorStats() {
 }
 
 export async function getHighRiskPatients() {
-    const session = await auth()
-    if (!session?.user || session.user.role !== "DOCTOR") {
-        return { patients: [], error: "Unauthorized" }
-    }
-
-    try {
-        const patients = await prisma.user.findMany({
-            where: {
-                role: "PATIENT",
-                pregnancies: {
-                    some: {
-                        status: "ACTIVE",
-                        riskLevel: "HIGH",
-                    },
-                },
-            },
-            include: {
-                pregnancies: {
-                    where: {
-                        status: "ACTIVE",
-                        riskLevel: "HIGH",
-                    },
-                    take: 1,
-                },
-                vitalReadings: {
-                    orderBy: {
-                        recordedAt: "desc",
-                    },
-                    take: 1,
-                },
-            },
-            orderBy: {
-                name: "asc",
-            },
-        })
-
-        return { patients, error: null }
-    } catch (error) {
-        console.error("Error fetching high-risk patients:", error)
-        return { patients: [], error: "Failed to fetch high-risk patients" }
-    }
+    // Temporarily disabled - riskLevel field not in DB yet
+    return { patients: [], error: null }
 }
 
 export async function getDoctorNotes() {
-    const session = await auth()
-    if (!session?.user || session.user.role !== "DOCTOR") {
-        return { notes: [], error: "Unauthorized" }
-    }
-
-    try {
-        const notes = await prisma.medicalNote.findMany({
-            where: {
-                doctorId: session.user.id,
-            },
-            include: {
-                patient: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                    },
-                },
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
-        })
-
-        return { notes, error: null }
-    } catch (error) {
-        console.error("Error fetching notes:", error)
-        return { notes: [], error: "Failed to fetch notes" }
-    }
+    // Temporarily disabled - medicalNote model not in DB yet
+    return { notes: [], error: null }
 }
 
 export async function getPatientVitalsHistory(patientId: string) {
-    const session = await auth()
-    if (!session?.user || session.user.role !== "DOCTOR") {
-        return { vitals: [], error: "Unauthorized" }
-    }
-
-    try {
-        const vitals = await prisma.vitalReading.findMany({
-            where: {
-                userId: patientId,
-            },
-            orderBy: {
-                recordedAt: "desc",
-            },
-            take: 30,
-        })
-
-        return { vitals, error: null }
-    } catch (error) {
-        console.error("Error fetching vitals history:", error)
-        return { vitals: [], error: "Failed to fetch vitals history" }
-    }
+    // Temporarily disabled - vitalReading model not in DB yet
+    return { vitals: [], error: null }
 }
 
 export async function getPatientDetails(patientId: string) {
@@ -262,12 +162,6 @@ export async function getPatientDetails(patientId: string) {
                         status: "ACTIVE",
                     },
                     take: 1,
-                },
-                vitalReadings: {
-                    orderBy: {
-                        recordedAt: "desc",
-                    },
-                    take: 10,
                 },
                 appointments: {
                     orderBy: {
@@ -300,35 +194,6 @@ export async function addMedicalNote(data: {
     content: string
     category?: string
 }) {
-    const session = await auth()
-    if (!session?.user || session.user.role !== "DOCTOR") {
-        return { note: null, error: "Unauthorized" }
-    }
-
-    try {
-        const note = await prisma.medicalNote.create({
-            data: {
-                patientId: data.patientId,
-                doctorId: session.user.id,
-                content: data.content,
-                category: data.category || "GENERAL",
-            },
-            include: {
-                patient: {
-                    select: {
-                        name: true,
-                        email: true,
-                    },
-                },
-            },
-        })
-
-        revalidatePath("/doctor/notes")
-        revalidatePath(`/doctor/patients/${data.patientId}`)
-
-        return { note, error: null }
-    } catch (error) {
-        console.error("Error adding medical note:", error)
-        return { note: null, error: "Failed to add medical note" }
-    }
+    // Temporarily disabled - medicalNote model not in DB yet
+    return { note: null, error: "Medical notes feature temporarily unavailable" }
 }

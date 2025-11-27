@@ -77,9 +77,8 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                     </CardHeader>
                     <CardContent>
                         {activePregnancy ? (
-                            <Badge variant={activePregnancy.riskLevel === 'HIGH' ? 'destructive' : activePregnancy.riskLevel === 'MEDIUM' ? 'secondary' : 'default'}
-                                className={activePregnancy.riskLevel === 'LOW' ? 'bg-green-100 text-green-700 hover:bg-green-100 text-lg px-3 py-1' : 'text-lg px-3 py-1'}>
-                                {activePregnancy.riskLevel}
+                            <Badge variant="secondary">
+                                N/A
                             </Badge>
                         ) : (
                             <p className="text-sm text-muted-foreground">N/A</p>
