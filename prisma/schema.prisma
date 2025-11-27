@@ -1,0 +1,527 @@
+// This is your Prisma schema file for MotherCare+
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - supports patients, doctors, and admins
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  password      String    // Hashed password
+  role          UserRole  @default(PATIENT)
+  phone         String?
+  dateOfBirth   DateTime?
+  avatar        String?   // URL to avatar image
+  
+  // Profile information
+  address       String?
+  city          String?
+  state         String?
+  zipCode       String?
+  country       String?
+  
+  // Doctor specific
+  specialization String?
+  
+  // Relationships
+  pregnancies   Pregnancy[]
+  appointments  Appointment[]
+  vitals        VitalSign[]
+  vitalReadings VitalReading[]
+  reports       MedicalReport[]
+  notifications Notification[]
+  preferences   NotificationPreference?
+  sessions      Session[]
+  accounts      Account[]
+  
+  // Admin/Doctor specific
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  adminLogs     SystemLog[] // Logs created by this admin
+  
+  // For doctors: appointments assigned to them
+  doctorAppointments Appointment[] @relation("DoctorAppointments")
+  
+  // Medical Notes
+  patientNotes    MedicalNote[] @relation("PatientNotes")
+  doctorNotes     MedicalNote[] @relation("DoctorNotes")
+
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@map("users")
+}
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+// Pregnancy record - tracks individual pregnancies
+model Pregnancy {
+  id                String       @id @default(cuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Pregnancy details
+  startDate         DateTime     // Last menstrual period (LMP)
+  dueDate           DateTime     // Expected due date
+  currentWeek       Int          @default(0) // Current week of pregnancy
+  status            PregnancyStatus @default(ACTIVE)
+  riskLevel         RiskLevel?   @default(LOW) // Risk assessment level
+  
+  // Medical information
+  bloodType         String?
+  rhFactor          String?      // Positive/Negative
+  height            Float?       // in cm
+  prePregnancyWeight Float?      // in kg
+  
+  // Relationships
+  appointments      Appointment[]
+  vitals            VitalSign[]
+  vitalReadings     VitalReading[]
+  reports           MedicalReport[]
+  
+  // Timestamps
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  @@map("pregnancies")
+}
+
+enum PregnancyStatus {
+  ACTIVE
+  COMPLETED
+  TERMINATED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// Medical appointments
+model Appointment {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pregnancyId String?
+  pregnancy   Pregnancy?        @relation(fields: [pregnancyId], references: [id], onDelete: SetNull)
+  
+  // Appointment details
+  title       String
+  description String?
+  type        AppointmentType
+  purpose     String?           // Human-readable purpose
+  // Doctor assignment (optional - for doctors in the system)
+  doctorId    String?
+  doctor      User?    @relation("DoctorAppointments", fields: [doctorId], references: [id], onDelete: SetNull)
+  
+  // Fallback fields for external doctors
+  doctorName  String?
+  doctorPhone String?
+  doctorEmail String?
+  
+  // ... rest of fields ...
+  location    String?
+  date        DateTime
+  duration    Int               @default(30) // Duration in minutes
+  status      AppointmentStatus @default(SCHEDULED)
+  
+  // Reminders
+  reminderEnabled Boolean       @default(true)
+  reminderHours   Int           @default(24) // Hours before appointment
+  reminderSent Boolean          @default(false)
+  reminderTime DateTime?        // When to send reminder
+  
+  // Notes
+  notes       String?
+  
+  // Timestamps
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  @@map("appointments")
+}
+
+enum AppointmentType {
+  ROUTINE_CHECKUP
+  ULTRASOUND
+  LAB_TEST
+  CONSULTATION
+  EMERGENCY
+  OTHER
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+// Vital signs tracking
+model VitalSign {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pregnancyId String?
+  pregnancy   Pregnancy? @relation(fields: [pregnancyId], references: [id], onDelete: SetNull)
+  
+  // Vital measurements
+  type        VitalType
+  value       Float
+  unit        String    // e.g., "kg", "mmHg", "bpm"
+  week        Int?      // Week of pregnancy when recorded
+  
+  // Additional notes
+  notes       String?
+  
+  // Timestamps
+  recordedAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("vital_signs")
+}
+
+enum VitalType {
+  WEIGHT
+  BLOOD_PRESSURE_SYSTOLIC
+  BLOOD_PRESSURE_DIASTOLIC
+  HEART_RATE
+  TEMPERATURE
+  BLOOD_SUGAR
+  SPO2
+  GLUCOSE
+  FETAL_MOVEMENT
+  OTHER
+}
+
+// Comprehensive vital readings - groups multiple vitals together
+model VitalReading {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pregnancyId String?
+  pregnancy   Pregnancy? @relation(fields: [pregnancyId], references: [id], onDelete: SetNull)
+  
+  // Blood Pressure
+  systolic    Int?      // mmHg
+  diastolic   Int?      // mmHg
+  
+  // Other vitals
+  heartRate   Int?      // bpm
+  weight      Float?    // kg
+  temperature Float?    // °C
+  glucose     Float?    // mg/dL (optional)
+  spo2        Int?      // % (optional)
+  fetalMovement Int?    // count per hour
+  
+  // Metadata
+  week        Int?      // Week of pregnancy
+  notes       String?
+  
+  // Alerts
+  hasAlerts   Boolean   @default(false)
+  alerts      VitalAlert[]
+  
+  // Timestamps
+  recordedAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("vital_readings")
+}
+
+// Vital alerts - auto-generated based on thresholds
+model VitalAlert {
+  id          String       @id @default(cuid())
+  readingId   String
+  reading     VitalReading @relation(fields: [readingId], references: [id], onDelete: Cascade)
+  
+  type        AlertType
+  severity    AlertSeverity
+  message     String
+  
+  acknowledged Boolean    @default(false)
+  acknowledgedAt DateTime?
+  
+  createdAt   DateTime   @default(now())
+  
+  @@map("vital_alerts")
+}
+
+enum AlertType {
+  HIGH_BLOOD_PRESSURE
+  LOW_BLOOD_PRESSURE
+  HIGH_HEART_RATE
+  LOW_HEART_RATE
+  RAPID_WEIGHT_GAIN
+  HIGH_GLUCOSE
+  LOW_SPO2
+  REDUCED_FETAL_MOVEMENT
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+// Medical reports and documents
+model MedicalReport {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pregnancyId String?
+  pregnancy   Pregnancy? @relation(fields: [pregnancyId], references: [id], onDelete: SetNull)
+  
+  // Report details
+  title       String
+  type        ReportType
+  category    ReportCategory? // More specific categorization
+  description String?
+  fileUrl     String    // URL to uploaded file (UploadThing)
+  fileName    String
+  fileSize    Int       // File size in bytes
+  mimeType    String    // e.g., "application/pdf", "image/jpeg"
+  
+  // Metadata
+  reportDate  DateTime? // Date when report was generated
+  expiryDate  DateTime? // For time-sensitive reports
+  isExpired   Boolean   @default(false)
+  doctorName  String?
+  doctorNotes String?   // Doctor's comments
+  clinicName  String?
+  
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("medical_reports")
+}
+
+enum ReportType {
+  ULTRASOUND
+  LAB_RESULT
+  BLOOD_TEST
+  URINE_TEST
+  PRESCRIPTION
+  DOCTOR_NOTES
+  OTHER
+}
+
+enum ReportCategory {
+  // Ultrasound subcategories
+  DATING_SCAN
+  ANATOMY_SCAN
+  GROWTH_SCAN
+  DOPPLER_SCAN
+  
+  // Blood test subcategories
+  COMPLETE_BLOOD_COUNT
+  GLUCOSE_TOLERANCE
+  THYROID_FUNCTION
+  IRON_STUDIES
+  GENETIC_SCREENING
+  
+  // Urine test subcategories
+  ROUTINE_URINALYSIS
+  URINE_CULTURE
+  PROTEIN_TEST
+  
+  // Other
+  PRESCRIPTION
+  DOCTOR_NOTES
+  VACCINATION_RECORD
+  OTHER
+}
+
+// Notifications
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Notification details
+  title       String
+  message     String
+  type        NotificationType
+  priority    NotificationPriority @default(NORMAL)
+  
+  // Link/action
+  link        String?         // URL to related page
+  action      String?         // Action identifier
+  
+  // Status
+  read        Boolean         @default(false)
+  readAt      DateTime?
+  
+  // Timestamps
+  createdAt   DateTime        @default(now())
+  
+  @@map("notifications")
+}
+
+enum NotificationType {
+  APPOINTMENT_REMINDER
+  APPOINTMENT_CREATED
+  APPOINTMENT_UPDATED
+  VITAL_REMINDER
+  REPORT_UPLOADED
+  SYSTEM_ALERT
+  GENERAL
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+// User notification preferences
+model NotificationPreference {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Email preferences
+  emailEnabled          Boolean  @default(true)
+  emailAppointmentReminders Boolean @default(true)
+  emailVitalReminders   Boolean  @default(true)
+  emailReportAlerts     Boolean  @default(true)
+  
+  // Push notification preferences
+  pushEnabled           Boolean  @default(true)
+  pushAppointmentReminders Boolean @default(true)
+  pushVitalReminders    Boolean  @default(true)
+  pushReportAlerts      Boolean  @default(true)
+  
+  // Reminder settings
+  appointmentReminderHours Int   @default(24) // Hours before appointment
+  vitalReminderDays        Int   @default(7)  // Days between vital reminders
+  
+  // Timestamps
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("notification_preferences")
+}
+
+// Session model for NextAuth (if using database sessions)
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// Account model for NextAuth OAuth
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// Verification token for email verification
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Department/Clinic model
+model Department {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  location    String?
+  headDoctor  String?  // Name of head doctor
+  contactPhone String?
+  
+  // Relationships
+  doctors     User[]
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("departments")
+}
+
+// System Logs for Admin
+model SystemLog {
+  id          String   @id @default(cuid())
+  action      String   // e.g., "CREATE_DOCTOR", "DELETE_PATIENT"
+  details     String?  // JSON string or description
+  
+  // Actor (who performed the action)
+  adminId     String
+  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  // Target (optional)
+  targetId    String?
+  targetType  String?  // e.g., "USER", "APPOINTMENT"
+  
+  // Metadata
+  ipAddress   String?
+  userAgent   String?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  @@map("system_logs")
+}
+
+
+// Medical Notes by Doctors
+model MedicalNote {
+  id          String    @id @default(cuid())
+  patientId   String
+  patient     User      @relation("PatientNotes", fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId    String
+  doctor      User      @relation("DoctorNotes", fields: [doctorId], references: [id], onDelete: Cascade)
+  
+  content     String
+  category    String    @default("GENERAL")
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("medical_notes")
+}
