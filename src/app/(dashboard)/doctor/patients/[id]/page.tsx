@@ -104,49 +104,9 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                         <CardTitle>Vitals History</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {vitals && vitals.length > 0 ? (
-                            <div className="space-y-3">
-                                {vitals.slice(0, 10).map((vital) => {
-                                    const hasHighBP = vital.bloodPressureSystolic > 140 || vital.bloodPressureDiastolic > 90
-                                    return (
-                                        <div key={vital.id} className={`p-3 border rounded-lg ${hasHighBP ? 'border-red-200 bg-red-50' : ''}`}>
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className="text-sm font-medium">
-                                                    {new Date(vital.recordedAt).toLocaleDateString()}
-                                                </span>
-                                                {hasHighBP && (
-                                                    <Badge variant="destructive" className="text-xs">High BP</Badge>
-                                                )}
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2 text-sm">
-                                                <div>
-                                                    <span className="text-muted-foreground">BP:</span>
-                                                    <span className={`ml-2 font-medium ${hasHighBP ? 'text-red-600' : ''}`}>
-                                                        {vital.bloodPressureSystolic}/{vital.bloodPressureDiastolic}
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-muted-foreground">HR:</span>
-                                                    <span className="ml-2 font-medium">{vital.heartRate} bpm</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-muted-foreground">Weight:</span>
-                                                    <span className="ml-2 font-medium">{vital.weight} kg</span>
-                                                </div>
-                                                {vital.glucose && (
-                                                    <div>
-                                                        <span className="text-muted-foreground">Glucose:</span>
-                                                        <span className="ml-2 font-medium">{vital.glucose} mg/dL</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground text-center py-8">No vitals recorded yet.</p>
-                        )}
+                        <div className="text-center text-muted-foreground py-8">
+                            Vitals history temporarily unavailable.
+                        </div>
                     </CardContent>
                 </Card>
 

@@ -124,45 +124,9 @@ export default async function DoctorDashboard() {
                         </Link>
                     </CardHeader>
                     <CardContent>
-                        {highRiskPatients && highRiskPatients.length > 0 ? (
-                            <div className="space-y-4">
-                                {highRiskPatients.slice(0, 5).map((patient) => {
-                                    const latestVital = patient.vitals[0]
-                                    const pregnancy = patient.pregnancies[0]
-                                    return (
-                                        <Link key={patient.id} href={`/doctor/patients/${patient.id}`}>
-                                            <div className="flex items-start gap-3 p-3 border rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="relative flex h-3 w-3">
-                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                                                    </span>
-                                                    <Avatar className="h-10 w-10">
-                                                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${patient.email}`} />
-                                                        <AvatarFallback>{patient.name?.[0] || "P"}</AvatarFallback>
-                                                    </Avatar>
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-medium truncate">{patient.name}</p>
-                                                    <p className="text-xs text-muted-foreground">Week {pregnancy?.currentWeek || "N/A"}</p>
-                                                    {latestVital && (
-                                                        <p className="text-xs text-red-600 mt-1">
-                                                            BP: {latestVital.bloodPressureSystolic}/{latestVital.bloodPressureDiastolic}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <Badge variant="destructive" className="shrink-0">HIGH RISK</Badge>
-                                            </div>
-                                        </Link>
-                                    )
-                                })}
-                            </div>
-                        ) : (
-                            <div className="text-center py-8">
-                                <AlertTriangle className="h-12 w-12 text-green-500 mx-auto mb-2" />
-                                <p className="text-sm text-muted-foreground">No high-risk patients</p>
-                            </div>
-                        )}
+                        <div className="text-center text-muted-foreground py-8">
+                            No high-risk patients found.
+                        </div>
                     </CardContent>
                 </Card>
             </div>
