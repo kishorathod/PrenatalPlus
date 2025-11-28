@@ -123,8 +123,8 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                                             <div>
                                                 <p className="font-medium">{appointment.purpose || "General Checkup"}</p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {new Date(appointment.appointmentDate).toLocaleDateString()} at{" "}
-                                                    {new Date(appointment.appointmentDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                                    {new Date(appointment.date).toLocaleDateString()} at{" "}
+                                                    {new Date(appointment.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             </div>
                                             <Badge variant={appointment.status === "COMPLETED" ? "default" : appointment.status === "CANCELLED" ? "destructive" : "secondary"}>
@@ -158,7 +158,7 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                                         <div>
                                             <p className="font-medium">{report.reportType}</p>
                                             <p className="text-sm text-muted-foreground">
-                                                Uploaded: {new Date(report.uploadedAt).toLocaleDateString()}
+                                                Uploaded: {new Date(report.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>
                                     </div>
