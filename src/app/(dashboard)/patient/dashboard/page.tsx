@@ -175,39 +175,11 @@ export default async function PatientDashboard() {
                                         </div>
                                     </div>
                                 ))
-                            ) : null}
-
-                            {/* Recent Vitals */}
-                            {recentActivity?.vitals && recentActivity.vitals.length > 0 ? (
-                                recentActivity.vitals.slice(0, 2).map((vital) => (
-                                    <div key={vital.id} className="flex items-start gap-3 p-3 rounded-lg bg-pink-50">
-                                        <div className="p-2 bg-pink-100 rounded">
-                                            <Heart className="h-4 w-4 text-pink-600" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900">
-                                                {vital.systolic && vital.diastolic
-                                                    ? `${vital.systolic}/${vital.diastolic} mmHg`
-                                                    : 'Vital Reading'}
-                                            </p>
-                                            {vital.heartRate && (
-                                                <p className="text-xs text-gray-600 mt-0.5">{vital.heartRate} bpm</p>
-                                            )}
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {format(new Date(vital.recordedAt), "MMM dd, h:mm a")}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : null}
-
-                            {/* Empty State */}
-                            {(!recentActivity?.appointments || recentActivity.appointments.length === 0) &&
-                                (!recentActivity?.vitals || recentActivity.vitals.length === 0) && (
-                                    <p className="text-sm text-gray-500 text-center py-8">
-                                        No recent activity to display
-                                    </p>
-                                )}
+                            ) : (
+                                <p className="text-sm text-gray-500 text-center py-8">
+                                    No recent appointments
+                                </p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

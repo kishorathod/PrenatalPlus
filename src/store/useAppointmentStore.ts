@@ -1,12 +1,13 @@
 import { create } from "zustand"
-import { Appointment, AppointmentType, AppointmentStatus } from "@/types/appointment.types"
+import { Appointment } from "@/types/appointment.types"
+import { AppointmentType, AppointmentStatus } from "@prisma/client"
 
 interface AppointmentState {
   appointments: Appointment[]
   selectedAppointment: Appointment | null
   isLoading: boolean
   error: string | null
-  
+
   // Actions
   setAppointments: (appointments: Appointment[]) => void
   addAppointment: (appointment: Appointment) => void
@@ -25,12 +26,12 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
   error: null,
 
   setAppointments: (appointments) => set({ appointments }),
-  
+
   addAppointment: (appointment) =>
     set((state) => ({
       appointments: [appointment, ...state.appointments],
     })),
-  
+
   updateAppointment: (id, updatedData) =>
     set((state) => ({
       appointments: state.appointments.map((app) =>
@@ -41,7 +42,7 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
           ? { ...state.selectedAppointment, ...updatedData }
           : state.selectedAppointment,
     })),
-  
+
   deleteAppointment: (id) =>
     set((state) => ({
       appointments: state.appointments.filter((app) => app.id !== id),
@@ -50,14 +51,14 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
           ? null
           : state.selectedAppointment,
     })),
-  
+
   setSelectedAppointment: (appointment) =>
     set({ selectedAppointment: appointment }),
-  
+
   setLoading: (loading) => set({ isLoading: loading }),
-  
+
   setError: (error) => set({ error }),
-  
+
   clearError: () => set({ error: null }),
 }))
 

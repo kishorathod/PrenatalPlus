@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
         // Generate alerts based on the reading
         const alertsData = generateAlertsFromReading(
             validatedData,
-            previousReading,
+            previousReading || undefined,
             validatedData.recordedAt || new Date()
         )
 
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
         // Calculate statistics
         const stats = {
             totalReadings: readings.length,
-            activeAlerts: readings.reduce((sum, r) => sum + (r.alerts?.filter(a => !a.acknowledged).length || 0), 0),
+            activeAlerts: readings.reduce((sum, r) => sum + ((r as any).alerts?.filter((a: any) => !a.acknowledged).length || 0), 0),
             averageSystolic: readings.filter(r => r.systolic).length > 0
                 ? readings.reduce((sum, r) => sum + (r.systolic || 0), 0) / readings.filter(r => r.systolic).length
                 : null,

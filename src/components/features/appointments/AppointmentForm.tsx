@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Appointment, CreateAppointmentInput } from "@/types/appointment.types"
+import { Appointment, CreateAppointmentData } from "@/types/appointment.types"
 import { createAppointmentSchema } from "@/lib/validations/appointment.validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,7 +33,7 @@ export function AppointmentForm({ appointment, onSuccess, onCancel }: Appointmen
   const { toast } = useToast()
   const isEditing = !!appointment
 
-  const [doctors, setDoctors] = useState<{ id: string; name: string | null; specialization: string | null }[]>([])
+  const [doctors, setDoctors] = useState<{ id: string; name: string | null; email: string }[]>([])
   const [isCustomDoctor, setIsCustomDoctor] = useState(false)
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export function AppointmentForm({ appointment, onSuccess, onCancel }: Appointmen
     formState: { errors, isSubmitting },
     setValue,
     watch,
-  } = useForm<CreateAppointmentInput>({
+  } = useForm<CreateAppointmentData>({
     resolver: zodResolver(createAppointmentSchema),
     defaultValues: appointment
       ? {
@@ -69,7 +69,7 @@ export function AppointmentForm({ appointment, onSuccess, onCancel }: Appointmen
       },
   })
 
-  const onSubmit = async (data: CreateAppointmentInput) => {
+  const onSubmit = async (data: CreateAppointmentData) => {
     try {
       if (isEditing && appointment) {
         await updateAppointment(appointment.id, data)

@@ -16,13 +16,13 @@ export function PusherProvider({ children }: PusherProviderProps) {
     if (!session?.user || !pusher) return
 
     const channel = pusher.subscribe(`user-${session.user.id}`)
-    
+
     channel.bind("pusher:subscription_succeeded", () => {
       setIsConnected(true)
     })
 
     return () => {
-      pusher.unsubscribe(`user-${session.user.id}`)
+      pusher?.unsubscribe(`user-${session.user.id}`)
     }
   }, [session])
 

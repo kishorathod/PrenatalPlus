@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const createVitalReadingSchema = z.object({
+const vitalReadingBase = z.object({
     // Blood Pressure
     systolic: z.number().int().min(50).max(250).optional(),
     diastolic: z.number().int().min(30).max(150).optional(),
@@ -18,7 +18,9 @@ export const createVitalReadingSchema = z.object({
     notes: z.string().max(1000).optional(),
     recordedAt: z.coerce.date().optional(),
     pregnancyId: z.string().optional(),
-}).refine(
+})
+
+export const createVitalReadingSchema = vitalReadingBase.refine(
     (data) => {
         // At least one vital must be provided
         return (
@@ -48,7 +50,7 @@ export const createVitalReadingSchema = z.object({
     }
 )
 
-export const updateVitalReadingSchema = createVitalReadingSchema.partial()
+export const updateVitalReadingSchema = vitalReadingBase
 
 export const acknowledgeAlertSchema = z.object({
     acknowledged: z.boolean(),

@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { VitalSign, CreateVitalInput } from "@/types/vitals.types"
+import { VitalSign, CreateVitalData } from "@/types/vitals.types"
 import { createVitalSchema } from "@/lib/validations/vitals.validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +33,9 @@ const typeLabels: Record<VitalType, string> = {
   HEART_RATE: "Heart Rate",
   TEMPERATURE: "Temperature",
   BLOOD_SUGAR: "Blood Sugar",
+  SPO2: "SpO2",
+  GLUCOSE: "Glucose",
+  FETAL_MOVEMENT: "Fetal Movement",
   OTHER: "Other",
 }
 
@@ -43,6 +46,9 @@ const defaultUnits: Record<VitalType, string> = {
   HEART_RATE: "bpm",
   TEMPERATURE: "°C",
   BLOOD_SUGAR: "mg/dL",
+  SPO2: "%",
+  GLUCOSE: "mg/dL",
+  FETAL_MOVEMENT: "kicks",
   OTHER: "",
 }
 
@@ -57,24 +63,24 @@ export function VitalsForm({ vital, onSuccess, onCancel }: VitalsFormProps) {
     formState: { errors, isSubmitting },
     setValue,
     watch,
-  } = useForm<CreateVitalInput>({
+  } = useForm<CreateVitalData>({
     resolver: zodResolver(createVitalSchema),
     defaultValues: vital
       ? {
-          type: vital.type,
-          value: vital.value,
-          unit: vital.unit,
-          week: vital.week || undefined,
-          notes: vital.notes || undefined,
-          recordedAt: new Date(vital.recordedAt),
-        }
+        type: vital.type,
+        value: vital.value,
+        unit: vital.unit,
+        week: vital.week || undefined,
+        notes: vital.notes || undefined,
+        recordedAt: new Date(vital.recordedAt),
+      }
       : {},
   })
 
   const selectedType = watch("type")
   const defaultUnit = selectedType ? defaultUnits[selectedType] : ""
 
-  const onSubmit = async (data: CreateVitalInput) => {
+  const onSubmit = async (data: CreateVitalData) => {
     try {
       // Set default unit if not provided
       if (!data.unit && selectedType) {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useCallback } from "react"
+import { useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { pusher } from "@/lib/pusher"
 import { useAppointmentStore } from "@/store/useAppointmentStore"
@@ -53,16 +53,11 @@ export function usePusher() {
     })
 
     return () => {
-      pusher.unsubscribe(`user-${session.user.id}`)
+      pusher?.unsubscribe(`user-${session.user.id}`)
     }
   }, [session, addAppointment, updateAppointment, deleteAppointment, addVital, updateVital, deleteVital, addNotification])
 
-  const triggerEvent = useCallback((channel: string, event: string, data: any) => {
-    if (!pusher) return
-    pusher.trigger(channel, event, data)
-  }, [])
-
-  return { triggerEvent }
+  return {}
 }
 
 

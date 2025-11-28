@@ -145,7 +145,7 @@ export function PregnancyForm({ onSuccess, onCancel }: PregnancyFormProps) {
             <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                     <Label htmlFor="bloodType">Blood Type (Optional)</Label>
-                    <Select onValueChange={(value) => setValue("bloodType", value)}>
+                    <Select onValueChange={(value) => setValue("bloodType", value as any)}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select blood type" />
                         </SelectTrigger>
@@ -160,7 +160,7 @@ export function PregnancyForm({ onSuccess, onCancel }: PregnancyFormProps) {
 
                 <div className="space-y-2">
                     <Label htmlFor="rhFactor">Rh Factor (Optional)</Label>
-                    <Select onValueChange={(value) => setValue("rhFactor", value)}>
+                    <Select onValueChange={(value) => setValue("rhFactor", value as "Positive" | "Negative")}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select Rh factor" />
                         </SelectTrigger>

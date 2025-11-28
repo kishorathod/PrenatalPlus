@@ -156,7 +156,7 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                                     <div className="flex items-center gap-3">
                                         <FileText className="h-4 w-4 text-muted-foreground" />
                                         <div>
-                                            <p className="font-medium">{report.reportType}</p>
+                                            <p className="font-medium">{report.type}</p>
                                             <p className="text-sm text-muted-foreground">
                                                 Uploaded: {new Date(report.createdAt).toLocaleDateString()}
                                             </p>

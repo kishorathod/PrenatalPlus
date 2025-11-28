@@ -1,4 +1,4 @@
-import NextAuth, { NextAuthOptions } from "next-auth"
+import NextAuth, { NextAuthConfig } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
@@ -15,7 +15,7 @@ if (!process.env.DATABASE_URL) {
   console.warn("⚠️  Database operations will fail. Make sure .env.local exists with DATABASE_URL")
 }
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthConfig = {
   session: {
     strategy: "jwt",
   },
@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
 
           const user = await prisma.user.findUnique({
             where: {
-              email: credentials.email,
+              email: credentials.email as string,
             },
           })
 
@@ -48,7 +48,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           const isPasswordValid = await bcrypt.compare(
-            credentials.password,
+            credentials.password as string,
             user.password
           )
 
@@ -57,13 +57,13 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Validate role if expectedRole is provided
-          if (credentials.expectedRole && user.role !== credentials.expectedRole) {
+          if (credentials.expectedRole && user.role !== (credentials.expectedRole as string)) {
             const roleNames: Record<string, string> = {
               'PATIENT': 'patients',
               'DOCTOR': 'doctors',
               'ADMIN': 'administrators'
             }
-            const expectedRoleName = roleNames[credentials.expectedRole] || credentials.expectedRole.toLowerCase()
+            const expectedRoleName = roleNames[credentials.expectedRole as string] || (credentials.expectedRole as string).toLowerCase()
             throw new Error(`This login page is for ${expectedRoleName} only. Please use the correct login page.`)
           }
 

@@ -20,7 +20,6 @@ export async function GET(req: NextRequest) {
                 id: true,
                 name: true,
                 email: true,
-                image: true, // NextAuth uses 'image', schema uses 'avatar' - need to check mapping or use avatar
                 avatar: true,
                 phone: true,
                 dateOfBirth: true,

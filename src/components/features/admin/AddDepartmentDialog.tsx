@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus } from "lucide-react"
-import { createDepartment } from "@/server/actions/admin"
+// import { createDepartment } from "@/server/actions/admin"
 import { useToast } from "@/components/ui/use-toast"
 import { Textarea } from "@/components/ui/textarea"
 
@@ -30,7 +30,8 @@ export function AddDepartmentDialog() {
         const formData = new FormData(event.currentTarget)
         const data = Object.fromEntries(formData)
 
-        const result = await createDepartment(data)
+        // const result = await createDepartment(data)
+        const result = { error: "Department creation not implemented yet" }
 
         if (result.error) {
             toast({

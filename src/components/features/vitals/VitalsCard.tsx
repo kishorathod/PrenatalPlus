@@ -30,6 +30,9 @@ const typeLabels: Record<VitalType, string> = {
   HEART_RATE: "Heart Rate",
   TEMPERATURE: "Temperature",
   BLOOD_SUGAR: "Blood Sugar",
+  SPO2: "SpO2",
+  GLUCOSE: "Glucose",
+  FETAL_MOVEMENT: "Fetal Movement",
   OTHER: "Other",
 }
 

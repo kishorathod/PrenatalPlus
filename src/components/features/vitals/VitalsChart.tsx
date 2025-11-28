@@ -1,6 +1,7 @@
 "use client"
 
-import { VitalSign, VitalType } from "@/types/vitals.types"
+import { VitalSign } from "@/types/vitals.types"
+import { VitalType } from "@prisma/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { format } from "date-fns"
 
