@@ -1,12 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Calendar, Activity, ClipboardList, AlertTriangle, Clock } from "lucide-react"
 import { getDoctorStats, getDoctorUpcomingAppointments, getHighRiskPatients } from "@/server/actions/doctor"
+import { getRecentActivity, getPendingTasks } from "@/server/actions/doctor-dashboard"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { auth } from "@/server/auth"
 import { redirect } from "next/navigation"
+import { RecentActivityTimeline } from "@/components/doctor/RecentActivityTimeline"
+import { QuickActionsPanel } from "@/components/doctor/QuickActionsPanel"
+import { PendingTasksWidget } from "@/components/doctor/PendingTasksWidget"
 
 export default async function DoctorDashboard() {
     // Server-side authorization check
@@ -15,9 +19,19 @@ export default async function DoctorDashboard() {
         redirect("/login?role=doctor")
     }
 
-    const { stats } = await getDoctorStats()
-    const { appointments } = await getDoctorUpcomingAppointments()
-    const { patients: highRiskPatients } = await getHighRiskPatients()
+    const [
+        { stats },
+        { appointments },
+        { patients: highRiskPatients },
+        { activities },
+        { tasks }
+    ] = await Promise.all([
+        getDoctorStats(),
+        getDoctorUpcomingAppointments(),
+        getHighRiskPatients(),
+        getRecentActivity(),
+        getPendingTasks()
+    ])
 
     const todayAppointments = appointments?.filter(apt => {
         const aptDate = new Date(apt.date)
@@ -163,6 +177,43 @@ export default async function DoctorDashboard() {
                                 <p className="text-sm text-muted-foreground">No high-risk patients</p>
                             </div>
                         )}
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Second Row - Quick Actions, Pending Tasks, and Recent Activity */}
+            <div className="grid gap-4 md:grid-cols-3">
+                {/* Quick Actions */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <QuickActionsPanel />
+                    </CardContent>
+                </Card>
+
+                {/* Pending Tasks */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Pending Tasks</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {tasks ? (
+                            <PendingTasksWidget tasks={tasks} />
+                        ) : (
+                            <p className="text-sm text-gray-500">Loading tasks...</p>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Recent Activity */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Recent Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <RecentActivityTimeline activities={activities || []} />
                     </CardContent>
                 </Card>
             </div>

@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { useVitals } from "@/hooks/useVitals"
 import { VitalsCard } from "@/components/features/vitals/VitalsCard"
+import { VitalsWidgets } from "@/components/features/vitals/VitalsWidgets"
 import { Button } from "@/components/ui/button"
 import { Plus, Heart } from "lucide-react"
 import {
@@ -13,9 +14,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { VitalsForm } from "@/components/features/vitals/VitalsForm"
+import { EnhancedVitalsForm } from "@/components/features/vitals/EnhancedVitalsForm"
 import { Loading } from "@/components/ui/loading"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useSession } from "next-auth/react"
 
 export default function VitalsPage() {
   const {
@@ -25,6 +27,7 @@ export default function VitalsPage() {
     fetchVitals,
     deleteVital,
   } = useVitals()
+  const { data: session } = useSession()
 
   useEffect(() => {
     fetchVitals()
@@ -60,12 +63,12 @@ export default function VitalsPage() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Record Vital Sign</DialogTitle>
+              <DialogTitle>Record Vital Signs</DialogTitle>
               <DialogDescription>
-                Add a new vital sign measurement
+                Quick entry with smart insights
               </DialogDescription>
             </DialogHeader>
-            <VitalsForm
+            <EnhancedVitalsForm
               onSuccess={() => {
                 fetchVitals()
               }}
@@ -79,6 +82,9 @@ export default function VitalsPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+
+      {/* Mini Widgets */}
+      {session?.user?.id && <VitalsWidgets userId={session.user.id} />}
 
       {vitals.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -96,12 +102,12 @@ export default function VitalsPage() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Record Vital Sign</DialogTitle>
+                <DialogTitle>Record Vital Signs</DialogTitle>
                 <DialogDescription>
-                  Add a new vital sign measurement
+                  Quick entry with smart insights
                 </DialogDescription>
               </DialogHeader>
-              <VitalsForm
+              <EnhancedVitalsForm
                 onSuccess={() => {
                   fetchVitals()
                 }}

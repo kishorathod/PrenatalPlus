@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { UserRole } from "@prisma/client"
+import { authConfig } from "./auth.config"
 
 // Validate required environment variables
 if (!process.env.NEXTAUTH_SECRET) {
@@ -16,12 +17,9 @@ if (!process.env.DATABASE_URL) {
 }
 
 export const authOptions: NextAuthConfig = {
+  ...authConfig,
   session: {
     strategy: "jwt",
-  },
-  pages: {
-    signIn: "/login",
-    error: "/login",
   },
   providers: [
     CredentialsProvider({
@@ -80,30 +78,6 @@ export const authOptions: NextAuthConfig = {
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-        token.role = (user as any).role
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string
-        session.user.role = token.role as UserRole
-      }
-      return session
-    },
-    async redirect({ url, baseUrl }) {
-      // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`
-      // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url
-      return baseUrl
-    },
-  },
-  secret: process.env.NEXTAUTH_SECRET,
 }
 
 export const { auth, handlers, signIn, signOut } = NextAuth(authOptions)

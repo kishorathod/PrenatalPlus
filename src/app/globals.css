@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,78 +6,91 @@
 
 @layer base {
   :root {
-    /* Soft, calming background */
-    --background: 0 0% 98%;
-    --foreground: 220 13% 13%;
+    /* Modern, clean background */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
-    /* Card with subtle warmth */
+    /* Card with glass-like feel */
     --card: 0 0% 100%;
-    --card-foreground: 220 13% 13%;
+    --card-foreground: 222 47% 11%;
 
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 13%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Primary - Soft Pink for warmth & maternity */
-    --primary: 330 60% 90%;
-    --primary-foreground: 330 70% 25%;
+    /* Primary - Vibrant yet soft Pink */
+    --primary: 330 80% 65%;
+    --primary-foreground: 210 40% 98%;
 
-    /* Secondary - Soft Blue for trust */
-    --secondary: 214 100% 93%;
-    --secondary-foreground: 214 60% 25%;
+    /* Secondary - Modern Indigo/Blue */
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11.2%;
 
-    /* Muted - Light neutral */
-    --muted: 220 13% 97%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    /* Accent - Lavender for gentleness */
-    --accent: 255 80% 94%;
-    --accent-foreground: 255 50% 30%;
+    /* Accent */
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11.2%;
 
-    /* Destructive - Softer red, less alarming */
-    --destructive: 0 70% 88%;
-    --destructive-foreground: 0 70% 35%;
+    /* Destructive */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    /* Borders - Very subtle */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 330 60% 80%;
+    /* Borders */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 330 80% 65%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Chart colors - Soft pastels */
-    --chart-1: 330 60% 85%;
-    --chart-2: 214 80% 85%;
-    --chart-3: 255 70% 85%;
-    --chart-4: 160 50% 85%;
-    --chart-5: 45 80% 85%;
+    /* Chart colors - Modern Gradients */
+    --chart-1: 330 80% 65%;
+    --chart-2: 250 80% 65%;
+    --chart-3: 190 80% 60%;
+    --chart-4: 150 60% 55%;
+    --chart-5: 30 80% 65%;
   }
 
   .dark {
-    --background: 220 13% 13%;
-    --foreground: 0 0% 98%;
-    --card: 220 13% 16%;
-    --card-foreground: 0 0% 98%;
-    --popover: 220 13% 16%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 330 60% 70%;
-    --primary-foreground: 330 10% 10%;
-    --secondary: 214 40% 30%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 220 13% 20%;
-    --muted-foreground: 220 9% 65%;
-    --accent: 255 50% 40%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 60% 50%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 25%;
-    --input: 220 13% 25%;
-    --ring: 330 60% 60%;
-    --chart-1: 330 60% 60%;
-    --chart-2: 214 70% 60%;
-    --chart-3: 255 60% 60%;
-    --chart-4: 160 50% 60%;
-    --chart-5: 45 70% 60%;
+    /* #111827 - Gray 900 */
+    --background: 220 13% 11%;
+    --foreground: 210 40% 98%;
+
+    /* #1F2937 - Gray 800 */
+    --card: 217 19% 17%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 217 19% 17%;
+    --popover-foreground: 210 40% 98%;
+
+    /* #EC4899 - Pink 500 */
+    --primary: 330 81% 60%;
+    --primary-foreground: 210 40% 98%;
+
+    /* #374151 - Gray 700 */
+    --secondary: 215 19% 27%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 215 19% 27%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 215 19% 27%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 215 19% 27%;
+    --input: 215 19% 27%;
+    --ring: 330 81% 60%;
+
+    --chart-1: 330 81% 60%;
+    --chart-2: 270 91% 65%;
+    --chart-3: 190 80% 60%;
+    --chart-4: 150 60% 55%;
+    --chart-5: 30 80% 65%;
   }
 }
 
@@ -88,11 +101,24 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Outfit', sans-serif;
   }
 }
 
 @layer utilities {
+  .font-heading {
+    font-family: 'Outfit', sans-serif;
+  }
+
   @keyframes spin-slow {
     from {
       transform: rotate(0deg);

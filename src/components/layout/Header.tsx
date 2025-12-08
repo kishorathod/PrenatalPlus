@@ -17,6 +17,7 @@ import { Menu, Settings, User, LogOut } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { NotificationBell } from "@/components/features/notifications/NotificationBell"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function Header() {
   const { data: session } = useSession()
@@ -33,11 +34,11 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b backdrop-blur-xl bg-white/60 supports-[backdrop-filter]:bg-white/60 transition-colors duration-300">
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Mobile Menu */}
         <Sheet>
-          <SheetTrigger asChild className="lg:hidden">
+          <SheetTrigger asChild className="md:hidden">
             <Button variant="ghost" size="icon">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle menu</span>
@@ -57,6 +58,11 @@ export function Header() {
 
         {/* Right Side Actions */}
         <div className="flex items-center space-x-2">
+          {/* Theme Toggle - Only for Doctor and Admin */}
+          {(session?.user?.role === "DOCTOR" || session?.user?.role === "ADMIN") && (
+            <ThemeToggle />
+          )}
+
           {/* Notifications */}
           <NotificationBell />
 

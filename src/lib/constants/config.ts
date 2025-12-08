@@ -1,5 +1,6 @@
 export const APP_CONFIG = {
-  name: 'MotherCare+',
+  name: 'PrenatalPlus',
+  tagline: 'Your Pregnancy Journey, Supported Every Step',
   description: 'Prenatal Tracking System',
   version: '0.1.0',
 } as const

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -33,32 +33,50 @@ export async function GET(req: NextRequest) {
       where.type = type
     }
 
-    const [notifications, total, unreadCount] = await Promise.all([
-      prisma.notification.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.notification.count({ where }),
-      prisma.notification.count({
-        where: {
-          userId: session.user.id,
-          read: false,
-        },
-      }),
-    ])
+    try {
+      const [notifications, total, unreadCount] = await Promise.all([
+        prisma.notification.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.notification.count({ where }),
+        prisma.notification.count({
+          where: {
+            userId: session.user.id,
+            read: false,
+          },
+        }),
+      ])
 
-    return NextResponse.json({
-      notifications,
-      unreadCount,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    })
+      return NextResponse.json({
+        notifications,
+        unreadCount,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      })
+    } catch (dbError: any) {
+      // If table doesn't exist, return empty data instead of erroring
+      if (dbError.code === 'P2021' || dbError.message?.includes('does not exist')) {
+        console.warn("Notification table not found, returning empty data")
+        return NextResponse.json({
+          notifications: [],
+          unreadCount: 0,
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+        })
+      }
+      throw dbError
+    }
   } catch (error: any) {
     console.error("Error fetching notifications:", error)
     return NextResponse.json(

@@ -3,7 +3,7 @@
 import { Notification } from "@/types/notification.types"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
-import { Calendar, FileText, Heart, Bell } from "lucide-react"
+import { Calendar, FileText, Heart, Bell, MessageSquare, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { NotificationType } from "@prisma/client"
@@ -22,6 +22,8 @@ const typeIcons: Record<NotificationType, typeof Bell> = {
   REPORT_UPLOADED: FileText,
   SYSTEM_ALERT: Bell,
   GENERAL: Bell,
+  MESSAGE_RECEIVED: MessageSquare,
+  HEALTH_ALERT: AlertTriangle,
 }
 
 export function NotificationItem({ notification, onRead, onClose }: NotificationItemProps) {

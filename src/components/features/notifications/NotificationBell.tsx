@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useNotifications } from "@/hooks/useNotifications"
+import { useSession } from "next-auth/react"
+import { pusher } from "@/lib/pusher"
 import { Button } from "@/components/ui/button"
 import { Bell } from "lucide-react"
 import {
@@ -12,6 +14,7 @@ import {
 import { NotificationList } from "./NotificationList"
 
 export function NotificationBell() {
+  const { data: session } = useSession()
   const { unreadCount, fetchNotifications } = useNotifications()
   const [open, setOpen] = useState(false)
 
@@ -21,6 +24,31 @@ export function NotificationBell() {
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [fetchNotifications])
+
+  // Subscribe to real-time notifications via Pusher
+  useEffect(() => {
+    if (!pusher || !session?.user?.id) return
+
+    const channel = pusher.subscribe(`user-${session.user.id}`)
+
+    channel.bind("new-notification", (data: any) => {
+      // Refresh notifications when a new one arrives
+      fetchNotifications()
+
+      // Optional: Play notification sound
+      if (typeof Audio !== "undefined") {
+        try {
+          const audio = new Audio("/notification.mp3")
+          audio.volume = 0.3
+          audio.play().catch(() => { }) // Ignore errors if sound fails
+        } catch (e) { }
+      }
+    })
+
+    return () => {
+      pusher?.unsubscribe(`user-${session.user.id}`)
+    }
+  }, [session?.user?.id, fetchNotifications])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

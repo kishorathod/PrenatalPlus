@@ -60,15 +60,9 @@ export function LoginForm({ expectedRole }: LoginFormProps = {}) {
   }
 
   return (
-    <Card className="w-full max-w-md border-0 shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-2xl overflow-hidden bg-gradient-to-br from-[#FAFBFF] to-[#F0F4FF]">
-      <CardHeader className="space-y-3 pb-6 pt-8 px-8">
-        <CardTitle className="text-2xl font-semibold text-center text-gray-900">Welcome Back</CardTitle>
-        <CardDescription className="text-center text-gray-500 text-sm">
-          Enter your credentials to access your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="px-8 pb-8">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <Card className="w-full max-w-md border-0 shadow-none bg-transparent">
+      <CardContent className="p-0">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
             <Alert variant="destructive" className="rounded-xl border-0 bg-red-50">
               <AlertDescription>{error}</AlertDescription>

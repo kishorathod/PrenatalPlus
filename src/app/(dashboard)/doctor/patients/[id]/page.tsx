@@ -1,12 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getPatientDetails, getPatientVitalsHistory } from "@/server/actions/doctor"
+import { getPatientDetails, getPatientVitalsHistory, getDoctorNotes } from "@/server/actions/doctor"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Activity, FileText, ArrowLeft, Plus } from "lucide-react"
+import { Calendar, Activity, FileText, ArrowLeft, Plus, Stethoscope, Pill, FlaskConical } from "lucide-react"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { auth } from "@/server/auth"
+import { MedicalNoteForm } from "@/components/doctor/MedicalNoteForm"
+import { RiskLevelBadge } from "@/components/doctor/RiskLevelBadge"
+import { PatientVitalsChart } from "@/components/doctor/PatientVitalsChart"
+import { PatientAlertList } from "@/components/doctor/PatientAlertList"
+import { PrescriptionForm } from "@/components/doctor/PrescriptionForm"
+import { LabTestRequestForm } from "@/components/doctor/LabTestRequestForm"
+import { format } from "date-fns"
 
 export default async function PatientDetailPage({ params }: { params: { id: string } }) {
     // Server-side authorization check
@@ -15,17 +22,22 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
         redirect("/login?role=doctor")
     }
 
-    const { patient } = await getPatientDetails(params.id)
-    const { vitals } = await getPatientVitalsHistory(params.id)
+    const [{ patient }, { vitals }, { notes }] = await Promise.all([
+        getPatientDetails(params.id),
+        getPatientVitalsHistory(params.id),
+        getDoctorNotes(params.id),
+    ])
 
     if (!patient) {
         notFound()
     }
 
     const activePregnancy = patient.pregnancies[0]
+    const vitalsWithAlerts = vitals?.filter((v: any) => v.alerts && v.alerts.length > 0) || []
 
     return (
         <div className="p-6 space-y-6">
+            {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Link href="/doctor/patients">
@@ -44,13 +56,23 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                         </div>
                     </div>
                 </div>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Note
-                </Button>
+                <div className="flex gap-2">
+                    <MedicalNoteForm patientId={patient.id} patientName={patient.name || "Patient"} />
+                    <PrescriptionForm
+                        patientId={patient.id}
+                        pregnancyId={activePregnancy?.id}
+                        patientName={patient.name || "Patient"}
+                    />
+                    <LabTestRequestForm
+                        patientId={patient.id}
+                        pregnancyId={activePregnancy?.id}
+                        patientName={patient.name || "Patient"}
+                    />
+                </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            {/* Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Pregnancy Status</CardTitle>
@@ -76,12 +98,14 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        {activePregnancy ? (
-                            <Badge variant="secondary">
-                                N/A
-                            </Badge>
+                        {activePregnancy?.riskLevel ? (
+                            <RiskLevelBadge
+                                pregnancyId={activePregnancy.id}
+                                currentRiskLevel={activePregnancy.riskLevel}
+                                editable={true}
+                            />
                         ) : (
-                            <p className="text-sm text-muted-foreground">N/A</p>
+                            <Badge variant="secondary">Not Assessed</Badge>
                         )}
                     </CardContent>
                 </Card>
@@ -89,27 +113,69 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Vitals</CardTitle>
-                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <Stethoscope className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{vitals?.length || 0}</div>
                         <p className="text-xs text-muted-foreground">Recorded entries</p>
                     </CardContent>
                 </Card>
-            </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Vitals History</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
+                        <FileText className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center text-muted-foreground py-8">
-                            Vitals history temporarily unavailable.
+                        <div className="text-2xl font-bold">
+                            {vitalsWithAlerts.reduce((acc: number, v: any) => acc + v.alerts.filter((a: any) => !a.acknowledged).length, 0)}
                         </div>
+                        <p className="text-xs text-muted-foreground">Unacknowledged</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Vitals Chart */}
+            {vitals && vitals.length > 0 && (
+                <PatientVitalsChart vitals={vitals} />
+            )}
+
+            {/* Two Column Layout */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                {/* Alerts */}
+                {vitalsWithAlerts.length > 0 && (
+                    <PatientAlertList vitals={vitalsWithAlerts} />
+                )}
+
+                {/* Medical Notes */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Medical Notes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {notes && notes.length > 0 ? (
+                            <div className="space-y-3">
+                                {notes.slice(0, 5).map((note: any) => (
+                                    <div key={note.id} className="p-3 border rounded-lg">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <Badge variant="outline">{note.category}</Badge>
+                                            <span className="text-xs text-muted-foreground">
+                                                {format(new Date(note.createdAt), "MMM dd, yyyy")}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm">{note.content}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground text-center py-8">
+                                No medical notes yet.
+                            </p>
+                        )}
                     </CardContent>
                 </Card>
 
+                {/* Recent Appointments */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Recent Appointments</CardTitle>
@@ -117,7 +183,7 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                     <CardContent>
                         {patient.appointments && patient.appointments.length > 0 ? (
                             <div className="space-y-3">
-                                {patient.appointments.map((appointment) => (
+                                {patient.appointments.map((appointment: any) => (
                                     <div key={appointment.id} className="p-3 border rounded-lg">
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
@@ -144,6 +210,7 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                 </Card>
             </div>
 
+            {/* Reports */}
             <Card>
                 <CardHeader>
                     <CardTitle>Reports</CardTitle>
@@ -151,18 +218,23 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
                 <CardContent>
                     {patient.reports && patient.reports.length > 0 ? (
                         <div className="space-y-2">
-                            {patient.reports.map((report) => (
+                            {patient.reports.map((report: any) => (
                                 <div key={report.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                                     <div className="flex items-center gap-3">
                                         <FileText className="h-4 w-4 text-muted-foreground" />
                                         <div>
-                                            <p className="font-medium">{report.type}</p>
+                                            <p className="font-medium">{report.title || report.type}</p>
                                             <p className="text-sm text-muted-foreground">
+                                                {report.category && `${report.category} | `}
                                                 Uploaded: {new Date(report.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>
                                     </div>
-                                    <Button variant="outline" size="sm">View</Button>
+                                    <Button variant="outline" size="sm" asChild>
+                                        <a href={report.fileUrl} target="_blank" rel="noopener noreferrer">
+                                            View
+                                        </a>
+                                    </Button>
                                 </div>
                             ))}
                         </div>

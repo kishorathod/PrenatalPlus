@@ -9,7 +9,6 @@ import {
   Calendar,
   Heart,
   FileText,
-  CalendarDays,
   Settings,
   User,
   Baby,
@@ -18,6 +17,9 @@ import {
   Building2,
   Activity,
   ClipboardList,
+  MessageSquare,
+  Timer,
+  Pill,
 } from "lucide-react"
 
 const patientNavigation = [
@@ -32,9 +34,34 @@ const patientNavigation = [
     icon: Baby,
   },
   {
+    name: "Chat",
+    href: "/patient/chat",
+    icon: MessageSquare,
+  },
+  {
     name: "Appointments",
-    href: "/appointments",
+    href: "/patient/appointments",
     icon: Calendar,
+  },
+  {
+    name: "Health Analytics",
+    href: "/patient/health",
+    icon: Activity,
+  },
+  {
+    name: "Kick Counter",
+    href: "/patient/kick-counter",
+    icon: Baby,
+  },
+  {
+    name: "Contraction Timer",
+    href: "/patient/contraction-timer",
+    icon: Timer,
+  },
+  {
+    name: "Medications",
+    href: "/patient/medications",
+    icon: Pill,
   },
   {
     name: "Vitals",
@@ -45,11 +72,6 @@ const patientNavigation = [
     name: "Reports",
     href: "/reports",
     icon: FileText,
-  },
-  {
-    name: "Calendar",
-    href: "/calendar",
-    icon: CalendarDays,
   },
   {
     name: "Profile",
@@ -80,6 +102,11 @@ const doctorNavigation = [
     icon: Calendar,
   },
   {
+    name: "Messages",
+    href: "/doctor/chat",
+    icon: MessageSquare,
+  },
+  {
     name: "Medical Notes",
     href: "/doctor/notes",
     icon: ClipboardList,
@@ -106,6 +133,11 @@ const adminNavigation = [
     name: "Dashboard",
     href: "/admin/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    name: "Users",
+    href: "/admin/users",
+    icon: Users,
   },
   {
     name: "Doctors",
@@ -148,7 +180,7 @@ export function Sidebar() {
   }
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-background">
+    <div className="flex h-full w-64 flex-col border-r bg-background transition-colors duration-300">
       <div className="flex h-16 items-center border-b px-6">
         <Link href={role === "DOCTOR" ? "/doctor/dashboard" : role === "ADMIN" ? "/admin/dashboard" : "/patient/dashboard"} className="flex items-center space-x-2">
           <span className="text-xl font-bold">PrenatalPlus</span>
@@ -162,13 +194,13 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "group flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-pink-50 text-pink-700 relative pl-4 before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:bg-pink-500 before:rounded-r-lg shadow-sm"
+                  : "text-muted-foreground hover:bg-pink-50 hover:text-pink-600"
               )}
             >
-              <item.icon className="h-5 w-5" />
+              <item.icon className={cn("h-5 w-5 transition-transform duration-200 group-hover:scale-110", isActive ? "text-pink-600" : "text-gray-400 group-hover:text-pink-500")} />
               <span>{item.name}</span>
             </Link>
           )

@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss"
 
 const config = {
-	darkMode: ["class"],
+	// darkMode: ["class"], // Disabled for now
 	content: [
 		'./pages/**/*.{ts,tsx}',
 		'./components/**/*.{ts,tsx}',
@@ -19,7 +19,8 @@ const config = {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+				sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+				heading: ['Nunito', 'Outfit', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -64,14 +65,17 @@ const config = {
 				},
 				// Custom healthcare colors
 				healthcare: {
-					pink: '#F6D7E5',
-					blue: '#DCEBFF',
-					lavender: '#E9E3FF',
-					gray: {
-						light: '#F7F7F8',
-						mid: '#D1D5DB',
-						dark: '#4B5563',
-					},
+					blue: '#4D9FFF', // Baby Blue
+					lavender: '#9F8CFF', // Lavender
+					pink: '#FFB7D1', // Soft Pink
+					mint: '#A1E4C1', // Mint Green
+					peach: '#FFD9C2', // Peach
+					cream: '#FAFAFF', // Off-white
+					gray: '#E8EAF2', // Soft Gray
+					text: {
+						primary: '#2D3748', // Softer dark
+						secondary: '#718096', // Softer gray
+					}
 				},
 			},
 			borderRadius: {
@@ -79,27 +83,22 @@ const config = {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
-			keyframes: {
-				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
-				},
-				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
-				}
+			'accordion-down': 'accordion-down 0.2s ease-out',
+			'accordion-up': 'accordion-up 0.2s ease-out',
+			'aurora': 'aurora 18s ease-in-out infinite',
+		},
+		keyframes: {
+			'accordion-down': {
+				from: { height: '0' },
+				to: { height: 'var(--radix-accordion-content-height)' }
 			},
-			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+			'accordion-up': {
+				from: { height: 'var(--radix-accordion-content-height)' },
+				to: { height: '0' }
+			},
+			'aurora': {
+				'0%, 100%': { backgroundPosition: '0% 50%' },
+				'50%': { backgroundPosition: '100% 50%' },
 			}
 		}
 	},

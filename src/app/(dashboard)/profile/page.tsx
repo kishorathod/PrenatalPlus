@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import { ProfileForm } from "@/components/features/profile/ProfileForm"
 
 export const metadata: Metadata = {
-    title: "Profile | MotherCare+",
+    title: "Profile | PrenatalPlus",
     description: "Manage your profile information",
 }
 

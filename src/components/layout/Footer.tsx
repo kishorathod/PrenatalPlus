@@ -9,7 +9,7 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
             <p className="text-sm text-muted-foreground">
-              © {currentYear} MotherCare+. All rights reserved.
+              © {currentYear} PrenatalPlus. All rights reserved.
             </p>
 
           </div>

@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import { SettingsForm } from "@/components/features/settings/SettingsForm"
 
 export const metadata: Metadata = {
-    title: "Settings | MotherCare+",
+    title: "Settings | PrenatalPlus",
     description: "Manage your account settings and preferences",
 }
 

@@ -10,54 +10,77 @@ export async function getPatientDashboardStats() {
         if (!session?.user) {
             return {
                 stats: { upcomingAppointments: 0, totalVitals: 0, totalReports: 0, activePregnancies: 0 },
-                recentActivity: { appointments: [], vitals: [] },
+                pregnancy: null,
+                recentActivity: [],
+                vitalsHistory: [],
                 error: null
             }
         }
 
         const userId = session.user.id
 
-        // Get appointment counts
-        const upcomingAppointments = await prisma.appointment.count({
-            where: {
-                userId,
-                date: { gte: new Date() }
-            }
+        // 1. Get counts
+        const upcomingAppointmentsCount = await prisma.appointment.count({
+            where: { userId, date: { gte: new Date() } }
         })
 
-        // Get active pregnancies count
-        const activePregnancies = await prisma.pregnancy.count({
-            where: {
-                userId,
-                status: "ACTIVE"
-            }
+        const totalVitals = await prisma.vitalReading.count({
+            where: { userId }
         })
 
-        // Get recent appointments
+        // Mocking reports count for now as the model might not be fully set up or populated
+        // In a real scenario: await prisma.medicalReport.count({ where: { userId } })
+        const totalReports = 0
+
+        // 2. Get active pregnancy
+        const activePregnancy = await prisma.pregnancy.findFirst({
+            where: { userId, status: "ACTIVE" },
+            orderBy: { createdAt: "desc" }
+        })
+
+        // 3. Get recent activity (Appointments + Vitals)
         const recentAppointments = await prisma.appointment.findMany({
             where: { userId },
-            orderBy: { createdAt: "desc" },
-            take: 3,
+            orderBy: { date: "desc" },
+            take: 5,
+            include: { doctor: { select: { name: true } } }
+        })
+
+        const recentVitals = await prisma.vitalReading.findMany({
+            where: { userId },
+            orderBy: { recordedAt: "desc" },
+            take: 5
+        })
+
+        // Combine and sort activity
+        const activity = [
+            ...recentAppointments.map(a => ({ type: 'APPOINTMENT', date: a.date, data: a })),
+            ...recentVitals.map(v => ({ type: 'VITALS', date: v.recordedAt, data: v }))
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5)
+
+        // 4. Get vitals history for charts (last 10 readings)
+        const vitalsHistory = await prisma.vitalReading.findMany({
+            where: { userId },
+            orderBy: { recordedAt: "asc" }, // Ascending for charts
+            take: 10,
             select: {
-                id: true,
-                title: true,
-                date: true,
-                status: true,
-                type: true
+                recordedAt: true,
+                weight: true,
+                systolic: true,
+                diastolic: true
             }
         })
 
         return {
             stats: {
-                upcomingAppointments,
-                totalVitals: 0, // Will be enabled after Prisma regeneration
-                totalReports: 0,
-                activePregnancies
+                upcomingAppointments: upcomingAppointmentsCount,
+                totalVitals,
+                totalReports,
+                activePregnancies: activePregnancy ? 1 : 0
             },
-            recentActivity: {
-                appointments: recentAppointments,
-                vitals: [] // Will be enabled after Prisma regeneration
-            },
+            pregnancy: activePregnancy,
+            recentActivity: activity,
+            vitalsHistory,
             error: null
         }
 
@@ -65,7 +88,9 @@ export async function getPatientDashboardStats() {
         console.error("Error fetching dashboard stats:", error)
         return {
             stats: { upcomingAppointments: 0, totalVitals: 0, totalReports: 0, activePregnancies: 0 },
-            recentActivity: { appointments: [], vitals: [] },
+            pregnancy: null,
+            recentActivity: [],
+            vitalsHistory: [],
             error: null
         }
     }

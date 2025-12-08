@@ -61,14 +61,8 @@ export function RegisterForm({ role = "patient" }: { role?: string }) {
   }
 
   return (
-    <Card className="w-full max-w-lg border-0 shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-2xl overflow-hidden bg-gradient-to-br from-[#FAFBFF] to-[#F0F4FF]">
-      <CardHeader className="space-y-3 pb-6 pt-8 px-8">
-        <CardTitle className="text-2xl font-semibold text-center text-gray-900">Create Account</CardTitle>
-        <CardDescription className="text-center text-gray-500 text-sm">
-          {role === "doctor" ? "Join as a healthcare provider" : role === "admin" ? "System administrator registration" : "Sign up to start tracking your prenatal care"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="px-8 pb-8">
+    <Card className="w-full max-w-md border-0 shadow-none bg-transparent">
+      <CardContent className="p-0">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
             <Alert variant="destructive" className="rounded-xl border-0 bg-red-50">
@@ -120,10 +114,15 @@ export function RegisterForm({ role = "patient" }: { role?: string }) {
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="+91"
+                  placeholder="9876543210"
+                  maxLength={10}
                   className="pl-10 h-11 rounded-xl border-[#E0E8FF] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 bg-white hover:border-[#3B82F6]/50 transition-all text-sm"
                   {...register("phone")}
                   disabled={isLoading}
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    target.value = target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                  }}
                 />
               </div>
               {errors.phone && (
@@ -134,11 +133,12 @@ export function RegisterForm({ role = "patient" }: { role?: string }) {
             <div className="space-y-2">
               <Label htmlFor="dateOfBirth" className="text-gray-700 font-medium text-sm">Birth Date</Label>
               <div className="relative">
-                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3B82F6]/60 pointer-events-none" />
+                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3B82F6]/60 pointer-events-none z-10" />
                 <Input
                   id="dateOfBirth"
                   type="date"
-                  className="pl-10 h-11 rounded-xl border-[#E0E8FF] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 bg-white hover:border-[#3B82F6]/50 transition-all text-sm"
+                  max={new Date().toISOString().split('T')[0]}
+                  className="pl-10 h-11 rounded-xl border-[#E0E8FF] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 bg-white hover:border-[#3B82F6]/50 transition-all text-sm [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100"
                   {...register("dateOfBirth")}
                   disabled={isLoading}
                 />
