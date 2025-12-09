@@ -405,55 +405,143 @@ export async function getAnalyticsData() {
 
     return { growthData, appointmentData }
 }
-  
-export async function getPatients() {  
-    await checkAdmin()  
-  
-    try {  
-        const patients = await prisma.user.findMany({  
-            where: { role: "PATIENT" },  
-            orderBy: { createdAt: "desc" },  
-            select: {  
-                id: true,  
-                name: true,  
-                email: true,  
-                createdAt: true,  
-                avatar: true,  
-                pregnancies: {  
-                    where: { status: "ACTIVE" },  
-                    take: 1,  
-                    select: { id: true, currentWeek: true, riskLevel: true }  
-                }  
-            }  
-        })  
-  
-        return { patients, error: null }  
-    } catch (error) {  
-        console.error("Error fetching patients:", error)  
-        return { patients: [], error: "Failed to fetch patients" }  
-    }  
-} 
-  
-export async function createDoctor(data: any) {  
-    await checkAdmin()  
-  
-    try {  
-        const { name, email, password, specialization } = data  
-        const { hash } = await import("bcryptjs")  
-  
-        const existingUser = await prisma.user.findUnique({ where: { email } })  
-        if (existingUser) return { error: "User with this email already exists" }  
-  
-        const hashedPassword = await hash(password, 10)  
-  
-        await prisma.user.create({  
-            data: { name, email, password: hashedPassword, role: "DOCTOR", specialization, isVerified: true }  
-        })  
-  
-        revalidatePath("/admin/doctors")  
-        return { success: true, error: null }  
-    } catch (error) {  
-        console.error("Error creating doctor:", error)  
-        return { success: false, error: "Failed to create doctor" }  
-    }  
-} 
+
+export async function getPatients() {
+    await checkAdmin()
+
+    try {
+        const patients = await prisma.user.findMany({
+            where: { role: "PATIENT" },
+            orderBy: { createdAt: "desc" },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                createdAt: true,
+                avatar: true,
+                pregnancies: {
+                    where: { status: "ACTIVE" },
+                    take: 1,
+                    select: { id: true, currentWeek: true, riskLevel: true }
+                }
+            }
+        })
+
+        return { patients, error: null }
+    } catch (error) {
+        console.error("Error fetching patients:", error)
+        return { patients: [], error: "Failed to fetch patients" }
+    }
+}
+
+export async function createDoctor(data: any) {
+    await checkAdmin()
+
+    try {
+        const { name, email, password, specialization } = data
+        const { hash } = await import("bcryptjs")
+
+        const existingUser = await prisma.user.findUnique({ where: { email } })
+        if (existingUser) return { error: "User with this email already exists" }
+
+        const hashedPassword = await hash(password, 10)
+
+        await prisma.user.create({
+            data: { name, email, password: hashedPassword, role: "DOCTOR", specialization, isVerified: true }
+        })
+
+        revalidatePath("/admin/doctors")
+        return { success: true, error: null }
+    } catch (error) {
+        console.error("Error creating doctor:", error)
+        return { success: false, error: "Failed to create doctor" }
+    }
+}
+
+export async function getDoctors() {
+    await checkAdmin()
+
+    try {
+        const doctors = await prisma.user.findMany({
+            where: {
+                role: "DOCTOR",
+                isVerified: true
+            },
+            orderBy: { name: "asc" },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                specialization: true,
+                hospitalClinic: true,
+                yearsOfExperience: true
+            }
+        })
+
+        return { doctors, error: null }
+    } catch (error) {
+        console.error("Error fetching doctors:", error)
+        return { doctors: [], error: "Failed to fetch doctors" }
+    }
+}
+
+export async function assignDoctorToPatient(data: {
+    patientId: string
+    doctorId: string
+    pregnancyId?: string
+}) {
+    const session = await checkAdmin()
+
+    try {
+        // Check if assignment already exists
+        const existing = await prisma.patientAssignment.findFirst({
+            where: {
+                patientId: data.patientId,
+                doctorId: data.doctorId,
+                pregnancyId: data.pregnancyId || null
+            }
+        })
+
+        if (existing) {
+            // Update existing assignment to GRANTED if it was revoked
+            await prisma.patientAssignment.update({
+                where: { id: existing.id },
+                data: {
+                    consentStatus: "GRANTED",
+                    consentGrantedAt: new Date(),
+                    status: "ACTIVE"
+                }
+            })
+        } else {
+            // Create new assignment with GRANTED status (admin override)
+            await prisma.patientAssignment.create({
+                data: {
+                    patientId: data.patientId,
+                    doctorId: data.doctorId,
+                    pregnancyId: data.pregnancyId,
+                    consentStatus: "GRANTED",
+                    consentGrantedAt: new Date(),
+                    consentRequestedAt: new Date(),
+                    status: "ACTIVE",
+                    isPrimary: true
+                }
+            })
+        }
+
+        // Log the action
+        await logAction({
+            action: "ASSIGN_DOCTOR",
+            details: `Assigned doctor to patient`,
+            adminId: session.user.id!,
+            targetId: data.patientId,
+            targetType: "PATIENT"
+        })
+
+        revalidatePath("/admin/patients")
+        return { success: true, error: null }
+    } catch (error) {
+        console.error("Error assigning doctor:", error)
+        return { success: false, error: "Failed to assign doctor" }
+    }
+}
+

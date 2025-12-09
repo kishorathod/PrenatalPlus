@@ -57,6 +57,7 @@ export const doctorRegisterSchema = baseRegisterSchema.extend({
   medicalLicenseNumber: z.string().min(5, "Medical license number is required"),
   specialization: z.string().min(2, "Specialization is required"),
   hospitalClinic: z.string().min(2, "Hospital/Clinic name is required"),
+  hospitalCode: z.string().optional(),
   yearsOfExperience: z.coerce.number().min(0, "Years of experience must be 0 or greater").max(70, "Invalid years of experience"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",

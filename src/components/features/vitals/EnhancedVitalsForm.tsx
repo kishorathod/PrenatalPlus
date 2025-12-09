@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, Zap } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { VoiceInputButton } from "./VoiceInputButton"
-import { parseVitalVoiceCommand } from "@/lib/voice-parser"
 import { useVitals } from "@/hooks/useVitals"
 
 interface EnhancedVitalsFormProps {
@@ -61,20 +59,23 @@ export function EnhancedVitalsForm({ onSuccess, onCancel }: EnhancedVitalsFormPr
         }
     })
 
-    const onSubmit = async (data: CreateVitalData) => {
+    const onSubmit = async (data: any) => {
         try {
-            await createVital(data)
-            toast({
-                title: "Vitals Recorded",
-                description: "Your vitals have been successfully saved.",
-            })
+            // Send data directly with correct field names
+            const vitalData = {
+                systolic: data.bpSystolic,
+                diastolic: data.bpDiastolic,
+                heartRate: data.heartRate,
+                weight: data.weight,
+                week: pregnancyWeek
+            }
+
+            await createVital(vitalData)
+            toast({ title: "Vitals Recorded", description: "Successfully saved your vitals." })
             onSuccess?.()
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to save vitals. Please try again.",
-                variant: "destructive",
-            })
+        } catch (error: any) {
+            console.error("Vitals error:", error)
+            toast({ title: "Error", description: error.message || "Failed to save vitals.", variant: "destructive" })
         }
     }
 
@@ -92,42 +93,6 @@ export function EnhancedVitalsForm({ onSuccess, onCancel }: EnhancedVitalsFormPr
         }
     }, [bpSystolic, bpDiastolic])
 
-    const handleVoiceResult = (text: string) => {
-        toast({
-            title: "Voice Detected",
-            description: `"${text}"`,
-        })
-
-        const parsed = parseVitalVoiceCommand(text)
-        let filledCount = 0
-
-        if (parsed.bpSystolic && parsed.bpDiastolic) {
-            setValue("bpSystolic", parsed.bpSystolic)
-            setValue("bpDiastolic", parsed.bpDiastolic)
-            filledCount++
-        }
-        if (parsed.weight) {
-            setValue("weight", parsed.weight)
-            filledCount++
-        }
-        if (parsed.heartRate) {
-            setValue("heartRate", parsed.heartRate)
-            filledCount++
-        }
-
-        if (filledCount > 0) {
-            toast({
-                title: "Fields Updated",
-                description: `Updated vitals from voice command.`,
-            })
-        } else {
-            toast({
-                title: "No Vitals Found",
-                description: "Try saying 'BP 120 80' or 'Weight 70 kg'",
-                variant: "destructive"
-            })
-        }
-    }
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -135,7 +100,6 @@ export function EnhancedVitalsForm({ onSuccess, onCancel }: EnhancedVitalsFormPr
                 <p className="text-sm text-blue-900">
                     <strong>Week {pregnancyWeek || "..."}</strong> of pregnancy
                 </p>
-                <VoiceInputButton onResult={handleVoiceResult} />
             </div>
 
             {/* Blood Pressure */}

@@ -168,6 +168,17 @@ function toast({ ...props }: Toast) {
         },
     })
 
+    // Play sound based on toast variant
+    import("@/lib/notification-sound").then(({ NotificationSound }) => {
+        if (props.variant === "destructive") {
+            NotificationSound.playWarning()
+        } else if (props.title?.toString().toLowerCase().includes("success")) {
+            NotificationSound.playSuccess()
+        } else {
+            NotificationSound.playInfo()
+        }
+    }).catch(() => { })
+
     return {
         id,
         dismiss,

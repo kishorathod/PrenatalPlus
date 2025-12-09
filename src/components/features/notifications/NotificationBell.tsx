@@ -35,14 +35,16 @@ export function NotificationBell() {
       // Refresh notifications when a new one arrives
       fetchNotifications()
 
-      // Optional: Play notification sound
-      if (typeof Audio !== "undefined") {
-        try {
-          const audio = new Audio("/notification.mp3")
-          audio.volume = 0.3
-          audio.play().catch(() => { }) // Ignore errors if sound fails
-        } catch (e) { }
-      }
+      // Play notification sound based on type
+      import("@/lib/notification-sound").then(({ NotificationSound }) => {
+        if (data.priority === "HIGH" || data.type === "SYSTEM_ALERT") {
+          NotificationSound.playCritical()
+        } else if (data.type === "HEALTH_ALERT") {
+          NotificationSound.playWarning()
+        } else {
+          NotificationSound.playInfo()
+        }
+      }).catch(() => { })
     })
 
     return () => {

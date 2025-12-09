@@ -1,13 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getPatients } from "@/server/actions/admin"
+import { getPatients, getDoctors } from "@/server/actions/admin"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { AssignDoctorDialog } from "@/components/admin/AssignDoctorDialog"
 
 export default async function PatientsPage() {
     const { patients, error } = await getPatients()
+    const { doctors } = await getDoctors()
 
     return (
         <div className="p-6 space-y-6">
@@ -45,6 +47,12 @@ export default async function PatientsPage() {
                                         ) : (
                                             <Badge variant="outline">Not Pregnant</Badge>
                                         )}
+                                        <AssignDoctorDialog
+                                            patientId={patient.id}
+                                            patientName={patient.name}
+                                            pregnancyId={patient.pregnancies[0]?.id}
+                                            doctors={doctors || []}
+                                        />
                                         <Button variant="ghost" size="sm">View Details</Button>
                                     </div>
                                 </div>

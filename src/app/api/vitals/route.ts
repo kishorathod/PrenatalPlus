@@ -7,7 +7,7 @@ import { triggerVitalEvent } from "@/lib/utils/realtime"
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -48,13 +48,13 @@ export async function GET(req: NextRequest) {
     }
 
     const [vitals, total] = await Promise.all([
-      prisma.vitalSign.findMany({
+      prisma.vitalReading.findMany({
         where,
         skip,
         take: limit,
         orderBy: { recordedAt: "desc" },
       }),
-      prisma.vitalSign.count({ where }),
+      prisma.vitalReading.count({ where }),
     ])
 
     return NextResponse.json({
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth()
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const validatedData = createVitalSchema.parse(body)
 
-    const vital = await prisma.vitalSign.create({
+    const vital = await prisma.vitalReading.create({
       data: {
         ...validatedData,
         userId: session.user.id,

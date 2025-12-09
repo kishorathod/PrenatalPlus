@@ -67,6 +67,14 @@ export async function generateAIResponse(history: { role: "user" | "model", part
         return { text, error: null };
     } catch (error: any) {
         console.error("Gemini API Error:", error.message);
+
+        if (error.message?.includes("429") || error.message?.includes("quota")) {
+            return {
+                text: null,
+                error: "I'm currently overloaded with requests (Rate Limit Exceeded). Please try again in a minute."
+            };
+        }
+
         return {
             text: null,
             error: "I'm having trouble connecting to the AI service right now. Please try again later."

@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
-import { registerSchema } from "@/lib/validations/auth.validation"
+import {
+  registerSchema,
+  doctorRegisterSchema,
+  adminRegisterSchema,
+  type PatientRegisterInput,
+  type DoctorRegisterInput,
+  type AdminRegisterInput
+} from "@/lib/validations/auth.validation"
 import { UserRole } from "@prisma/client"
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-
-    // Validate input
-    const validatedData = registerSchema.parse(body)
 
     // Get role from request, default to PATIENT if not provided
     const userRole = (body.role?.toUpperCase() || 'PATIENT') as UserRole
@@ -20,6 +24,18 @@ export async function POST(req: NextRequest) {
         { error: "Invalid role specified" },
         { status: 400 }
       )
+    }
+
+    // Dynamic validation based on role
+    let validatedData: any
+
+    // We need to parse slightly differently based on the role to ensure we use the right schema
+    if (userRole === 'DOCTOR') {
+      validatedData = doctorRegisterSchema.parse(body)
+    } else if (userRole === 'ADMIN') {
+      validatedData = adminRegisterSchema.parse(body)
+    } else {
+      validatedData = registerSchema.parse(body)
     }
 
     console.log('📝 Registering user with role:', userRole)
@@ -39,16 +55,47 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(validatedData.password, 12)
 
-    // Create user with the specified role
+    // Prepare user data object based on common fields
+    const userData: any = {
+      name: validatedData.name,
+      email: validatedData.email,
+      password: hashedPassword,
+      role: userRole,
+    }
+
+    // Add role-specific fields
+    if (userRole === 'DOCTOR') {
+      const doctorData = validatedData as DoctorRegisterInput
+      userData.phone = doctorData.phone
+      userData.medicalLicenseNumber = doctorData.medicalLicenseNumber
+      userData.hospitalClinic = doctorData.hospitalClinic
+      userData.yearsOfExperience = doctorData.yearsOfExperience
+      userData.specialization = doctorData.specialization
+
+      // Verification Logic
+      const providedCode = doctorData.hospitalCode
+      const correctCode = process.env.HOSPITAL_ACCESS_CODE
+
+      if (providedCode && correctCode && providedCode === correctCode) {
+        userData.isVerified = true
+        console.log("✅ Doctor auto-verified with correct hospital code")
+      } else {
+        userData.isVerified = false
+        console.log("⚠️ Doctor registered as unverified (pending approval)")
+      }
+    } else if (userRole === 'PATIENT') {
+      const patientData = validatedData as PatientRegisterInput
+      userData.phone = patientData.phone
+      userData.dateOfBirth = patientData.dateOfBirth
+      // Note: expectedDueDate, emergency contacts etc are likely stored in pregnancy or separate profile update
+      // But we can add them here if the User model supported them directly or if we create related records
+    } else if (userRole === 'ADMIN') {
+      // Admin specific fields if any
+    }
+
+    // Create user with the specified role and data
     const user = await prisma.user.create({
-      data: {
-        name: validatedData.name,
-        email: validatedData.email,
-        password: hashedPassword,
-        phone: validatedData.phone,
-        dateOfBirth: validatedData.dateOfBirth,
-        role: userRole,  // ✅ Use role from request
-      },
+      data: userData,
       select: {
         id: true,
         email: true,

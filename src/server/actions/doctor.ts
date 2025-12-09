@@ -4,16 +4,39 @@ import { auth } from "@/server/auth"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
+// Helper function to check if doctor has patient consent
+async function checkPatientConsent(doctorId: string, patientId: string): Promise<boolean> {
+    const assignment = await prisma.patientAssignment.findFirst({
+        where: {
+            doctorId,
+            patientId,
+            consentStatus: "GRANTED"
+        }
+    })
+    return !!assignment
+}
+
+
 export async function getDoctorPatients() {
     const session = await auth()
     if (!session?.user || session.user.role !== "DOCTOR") {
         return { patients: [], error: "Unauthorized" }
     }
 
+    if (!session.user.isVerified) {
+        return { patients: [], error: "Your account is pending verification. Please contact your hospital admin." }
+    }
+
     try {
         const patients = await prisma.user.findMany({
             where: {
                 role: "PATIENT",
+                patientAssignments: {
+                    some: {
+                        doctorId: session.user.id,
+                        consentStatus: "GRANTED"
+                    }
+                }
             },
             include: {
                 pregnancies: {
@@ -57,6 +80,10 @@ export async function getDoctorUpcomingAppointments() {
     const session = await auth()
     if (!session?.user || session.user.role !== "DOCTOR") {
         return { appointments: [], error: "Unauthorized" }
+    }
+
+    if (!session.user.isVerified) {
+        return { appointments: [], error: "Your account is pending verification." }
     }
 
     try {
@@ -107,6 +134,10 @@ export async function getDoctorStats() {
         return { stats: null, error: "Unauthorized" }
     }
 
+    if (!session.user.isVerified) {
+        return { stats: null, error: "Your account is pending verification." }
+    }
+
     try {
         const [totalPatients, todayAppointments, highRiskCount] = await Promise.all([
             prisma.user.count({
@@ -154,6 +185,10 @@ export async function getHighRiskPatients() {
     const session = await auth()
     if (!session?.user || session.user.role !== "DOCTOR") {
         return { patients: [], error: "Unauthorized" }
+    }
+
+    if (!session.user.isVerified) {
+        return { patients: [], error: "Your account is pending verification." }
     }
 
     try {
@@ -210,6 +245,10 @@ export async function getDoctorNotes(patientId?: string) {
         return { notes: [], error: "Unauthorized" }
     }
 
+    if (!session.user.isVerified) {
+        return { notes: [], error: "Your account is pending verification." }
+    }
+
     try {
         const notes = await prisma.medicalNote.findMany({
             where: {
@@ -244,6 +283,10 @@ export async function getPatientVitalsHistory(patientId: string) {
         return { vitals: [], error: "Unauthorized" }
     }
 
+    if (!session.user.isVerified) {
+        return { vitals: [], error: "Your account is pending verification." }
+    }
+
     try {
         const vitals = await prisma.vitalReading.findMany({
             where: {
@@ -274,6 +317,16 @@ export async function getPatientDetails(patientId: string) {
     const session = await auth()
     if (!session?.user || session.user.role !== "DOCTOR") {
         return { patient: null, error: "Unauthorized" }
+    }
+
+    if (!session.user.isVerified) {
+        return { patient: null, error: "Your account is pending verification." }
+    }
+
+    // Check patient consent
+    const hasConsent = await checkPatientConsent(session.user.id, patientId)
+    if (!hasConsent) {
+        return { patient: null, error: "Patient has not granted you access to their data." }
     }
 
     try {
@@ -325,6 +378,10 @@ export async function addMedicalNote(data: {
         return { note: null, error: "Unauthorized" }
     }
 
+    if (!session.user.isVerified) {
+        return { note: null, error: "Your account is pending verification." }
+    }
+
     try {
         const note = await prisma.medicalNote.create({
             data: {
@@ -371,6 +428,10 @@ export async function updatePatientRiskLevel(pregnancyId: string, riskLevel: "LO
         return { success: false, error: "Unauthorized" }
     }
 
+    if (!session.user.isVerified) {
+        return { success: false, error: "Your account is pending verification." }
+    }
+
     try {
         await prisma.pregnancy.update({
             where: { id: pregnancyId },
@@ -400,6 +461,10 @@ export async function createPrescription(data: {
     const session = await auth()
     if (!session?.user || session.user.role !== "DOCTOR") {
         return { prescription: null, error: "Unauthorized" }
+    }
+
+    if (!session.user.isVerified) {
+        return { prescription: null, error: "Your account is pending verification." }
     }
 
     try {
@@ -461,6 +526,10 @@ export async function requestLabTest(data: {
         return { labTest: null, error: "Unauthorized" }
     }
 
+    if (!session.user.isVerified) {
+        return { labTest: null, error: "Your account is pending verification." }
+    }
+
     try {
         const labTest = await prisma.labTestRequest.create({
             data: {
@@ -498,6 +567,10 @@ export async function acknowledgeVitalAlert(alertId: string) {
         return { success: false, error: "Unauthorized" }
     }
 
+    if (!session.user.isVerified) {
+        return { success: false, error: "Your account is pending verification." }
+    }
+
     try {
         await prisma.vitalAlert.update({
             where: { id: alertId },
@@ -521,6 +594,10 @@ export async function getPatientsWithAlerts() {
     const session = await auth()
     if (!session?.user || session.user.role !== "DOCTOR") {
         return { patients: [], error: "Unauthorized" }
+    }
+
+    if (!session.user.isVerified) {
+        return { patients: [], error: "Your account is pending verification." }
     }
 
     try {

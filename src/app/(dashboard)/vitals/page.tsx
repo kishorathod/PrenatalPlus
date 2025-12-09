@@ -83,52 +83,27 @@ export default function VitalsPage() {
         </Alert>
       )}
 
-      {/* Mini Widgets */}
-      {session?.user?.id && <VitalsWidgets userId={session.user.id} />}
+      {session?.user && <VitalsWidgets userId={session.user.id} />}
 
-      {vitals.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Heart className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold">No vitals recorded</h3>
-          <p className="text-muted-foreground mb-4">
-            Start tracking your vital signs
-          </p>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Record Vital
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Record Vital Signs</DialogTitle>
-                <DialogDescription>
-                  Quick entry with smart insights
-                </DialogDescription>
-              </DialogHeader>
-              <EnhancedVitalsForm
-                onSuccess={() => {
-                  fetchVitals()
-                }}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {vitals.map((vital) => (
+      <div className="grid gap-4 md:grid-cols-2">
+        {vitals.length === 0 ? (
+          <div className="col-span-2 text-center py-12">
+            <Heart className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No vitals recorded</h3>
+            <p className="text-muted-foreground mb-4">
+              Start tracking your vital signs to monitor your health
+            </p>
+          </div>
+        ) : (
+          vitals.map((vital) => (
             <VitalsCard
               key={vital.id}
               vital={vital}
-              onEdit={() => fetchVitals()}
               onDelete={handleDelete}
             />
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   )
 }
-
-

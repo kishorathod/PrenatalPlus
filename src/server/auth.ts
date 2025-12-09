@@ -70,6 +70,7 @@ export const authOptions: NextAuthConfig = {
             email: user.email,
             name: user.name,
             role: user.role,
+            isVerified: user.isVerified,
           }
         } catch (error) {
           console.error("Authorization error:", error)

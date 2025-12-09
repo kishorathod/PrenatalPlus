@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Timer,
   Pill,
+  Shield,
 } from "lucide-react"
 
 const patientNavigation = [
@@ -72,6 +73,11 @@ const patientNavigation = [
     name: "Reports",
     href: "/reports",
     icon: FileText,
+  },
+  {
+    name: "Privacy",
+    href: "/patient/privacy",
+    icon: Shield,
   },
   {
     name: "Profile",

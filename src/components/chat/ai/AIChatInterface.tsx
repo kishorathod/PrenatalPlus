@@ -99,7 +99,20 @@ export function AIChatInterface() {
                 // Actually, let's append the AI message.
                 setMessages(prev => [...prev, result.message as unknown as Message])
             } else {
-                toast({ title: "Error settings message", description: result.error, variant: "destructive" })
+                // Determine if we should show this as a chat message or a toast
+                // For rate limits/connection issues, a chat message is better UX
+                const errorMessage: Message = {
+                    id: "error-" + Date.now(),
+                    role: "ASSISTANT",
+                    content: result.error || "Something went wrong. Please try again.",
+                    createdAt: new Date()
+                }
+                setMessages(prev => [...prev, errorMessage])
+
+                // Optional: Still show toast for other types of errors if needed, but this covers the user request
+                if (!result.error?.includes("Rate Limit")) {
+                    toast({ title: "Error sending message", description: result.error, variant: "destructive" })
+                }
             }
         } catch (error) {
             toast({ title: "Error", description: "Failed to send message", variant: "destructive" })

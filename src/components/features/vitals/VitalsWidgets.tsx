@@ -2,29 +2,31 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Heart, Weight, Activity, TrendingUp, TrendingDown } from "lucide-react"
+import { Heart, Weight, Activity } from "lucide-react"
 
 interface VitalsWidgetsProps {
     userId: string
 }
 
 export function VitalsWidgets({ userId }: VitalsWidgetsProps) {
-    const [todayVitals, setTodayVitals] = useState<any>(null)
+    const [latestVital, setLatestVital] = useState<any>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        const fetchTodayVitals = async () => {
+        const fetchLatestVitals = async () => {
             try {
-                const response = await fetch("/api/vitals/today")
+                const response = await fetch("/api/vitals?limit=1")
                 const data = await response.json()
-                setTodayVitals(data)
+                if (data.vitals && data.vitals.length > 0) {
+                    setLatestVital(data.vitals[0])
+                }
             } catch (error) {
-                console.error("Failed to fetch today's vitals:", error)
+                console.error("Failed to fetch latest vitals:", error)
             } finally {
                 setLoading(false)
             }
         }
-        fetchTodayVitals()
+        fetchLatestVitals()
     }, [])
 
     if (loading) {
@@ -50,7 +52,9 @@ export function VitalsWidgets({ userId }: VitalsWidgetsProps) {
                         <div>
                             <p className="text-sm text-gray-500">Blood Pressure</p>
                             <p className="text-2xl font-bold">
-                                {todayVitals?.bp ? `${todayVitals.bp.systolic}/${todayVitals.bp.diastolic}` : "--/--"}
+                                {latestVital?.systolic && latestVital?.diastolic
+                                    ? `${latestVital.systolic}/${latestVital.diastolic}`
+                                    : "--/--"}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">mmHg</p>
                         </div>
@@ -58,18 +62,6 @@ export function VitalsWidgets({ userId }: VitalsWidgetsProps) {
                             <Heart className="h-6 w-6 text-red-500" />
                         </div>
                     </div>
-                    {todayVitals?.bp?.trend && (
-                        <div className="mt-2 flex items-center text-xs">
-                            {todayVitals.bp.trend === "up" ? (
-                                <TrendingUp className="h-3 w-3 text-red-500 mr-1" />
-                            ) : (
-                                <TrendingDown className="h-3 w-3 text-green-500 mr-1" />
-                            )}
-                            <span className={todayVitals.bp.trend === "up" ? "text-red-500" : "text-green-500"}>
-                                {todayVitals.bp.trend === "up" ? "Higher" : "Lower"} than average
-                            </span>
-                        </div>
-                    )}
                 </CardContent>
             </Card>
 
@@ -80,7 +72,7 @@ export function VitalsWidgets({ userId }: VitalsWidgetsProps) {
                         <div>
                             <p className="text-sm text-gray-500">Weight</p>
                             <p className="text-2xl font-bold">
-                                {todayVitals?.weight ? `${todayVitals.weight.value}` : "--"}
+                                {latestVital?.weight ? `${latestVital.weight}` : "--"}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">kg</p>
                         </div>
@@ -88,11 +80,6 @@ export function VitalsWidgets({ userId }: VitalsWidgetsProps) {
                             <Weight className="h-6 w-6 text-blue-500" />
                         </div>
                     </div>
-                    {todayVitals?.weight?.change && (
-                        <div className="mt-2 text-xs text-gray-600">
-                            {todayVitals.weight.change > 0 ? "+" : ""}{todayVitals.weight.change.toFixed(1)} kg this week
-                        </div>
-                    )}
                 </CardContent>
             </Card>
 
@@ -103,7 +90,7 @@ export function VitalsWidgets({ userId }: VitalsWidgetsProps) {
                         <div>
                             <p className="text-sm text-gray-500">Heart Rate</p>
                             <p className="text-2xl font-bold">
-                                {todayVitals?.heartRate ? `${todayVitals.heartRate.value}` : "--"}
+                                {latestVital?.heartRate ? `${latestVital.heartRate}` : "--"}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">bpm</p>
                         </div>
@@ -111,11 +98,6 @@ export function VitalsWidgets({ userId }: VitalsWidgetsProps) {
                             <Activity className="h-6 w-6 text-pink-500" />
                         </div>
                     </div>
-                    {todayVitals?.heartRate?.status && (
-                        <div className="mt-2 text-xs text-gray-600">
-                            {todayVitals.heartRate.status}
-                        </div>
-                    )}
                 </CardContent>
             </Card>
         </div>

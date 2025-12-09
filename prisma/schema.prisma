@@ -27,6 +27,9 @@ model User {
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
   isVerified           Boolean                 @default(false)
+  hospitalClinic       String?
+  medicalLicenseNumber String?
+  yearsOfExperience    Int?
   accounts             Account[]
   aiChatSessions       AIChatSession[]
   doctorAppointments   Appointment[]           @relation("DoctorAppointments")
@@ -472,12 +475,18 @@ model PatientAssignment {
   assignedAt  DateTime         @default(now())
   isPrimary   Boolean          @default(true)
   status      AssignmentStatus @default(ACTIVE)
-  notes       String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  doctor      User             @relation("DoctorAssignments", fields: [doctorId], references: [id], onDelete: Cascade)
-  patient     User             @relation("PatientAssignments", fields: [patientId], references: [id], onDelete: Cascade)
-  pregnancy   Pregnancy?       @relation(fields: [pregnancyId], references: [id])
+  notes               String?
+  consentStatus       ConsentStatus    @default(GRANTED)
+  consentRequestedAt  DateTime?        @default(now())
+  consentGrantedAt    DateTime?        @default(now())
+  consentRevokedAt    DateTime?
+  accessLevel         AccessLevel      @default(FULL)
+  revokeReason        String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  doctor              User             @relation("DoctorAssignments", fields: [doctorId], references: [id], onDelete: Cascade)
+  patient             User             @relation("PatientAssignments", fields: [patientId], references: [id], onDelete: Cascade)
+  pregnancy           Pregnancy?       @relation(fields: [pregnancyId], references: [id])
 
   @@map("patient_assignments")
 }
@@ -695,6 +704,18 @@ enum AssignmentStatus {
   ACTIVE
   INACTIVE
   TRANSFERRED
+}
+
+enum ConsentStatus {
+  PENDING
+  GRANTED
+  REVOKED
+  EXPIRED
+}
+
+enum AccessLevel {
+  FULL
+  LIMITED
 }
 
 enum AIRole {

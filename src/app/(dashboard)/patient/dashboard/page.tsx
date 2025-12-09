@@ -36,29 +36,47 @@ export default async function PatientDashboard() {
                     <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
                         Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-500">{session.user.name?.split(' ')[0] || 'Mom'}</span>
                     </h1>
-                    <p className="text-slate-500 text-lg">
-                        Week {pregnancyWeek} · {getTrimester(pregnancyWeek)} · Baby is the size of a <span className="font-semibold text-rose-500">{getBabySizeText(pregnancyWeek)}</span>
-                    </p>
 
-                    <div className="flex flex-wrap gap-4 mt-4">
-                        {/* Status Alert */}
-                        <Alert className="bg-pink-50/50 border-pink-100 text-pink-800 rounded-2xl w-auto inline-flex items-center shadow-sm">
-                            <CheckCircle2 className="h-4 w-4 text-pink-600 mr-2" />
-                            <AlertDescription className="font-medium text-pink-700">
-                                Everything looks good today.
-                            </AlertDescription>
-                        </Alert>
+                    {pregnancy ? (
+                        <>
+                            <p className="text-slate-500 text-lg">
+                                Week {pregnancyWeek} · {getTrimester(pregnancyWeek)} · Baby is the size of a <span className="font-semibold text-rose-500">{getBabySizeText(pregnancyWeek)}</span>
+                            </p>
 
-                        {/* Daily Tip (Fills empty space) */}
-                        <div className="inline-flex items-center gap-2 px-4 py-3 bg-yellow-50/80 border border-yellow-100 rounded-2xl text-yellow-800 text-sm font-medium animate-in fade-in slide-in-from-bottom-3 duration-700 shadow-sm">
-                            <Lightbulb className="h-4 w-4 text-yellow-600" />
-                            <span>Tip: {getDailyTip()}</span>
+                            <div className="flex flex-wrap gap-4 mt-4">
+                                {/* Status Alert */}
+                                <Alert className="bg-pink-50/50 border-pink-100 text-pink-800 rounded-2xl w-auto inline-flex items-center shadow-sm">
+                                    <CheckCircle2 className="h-4 w-4 text-pink-600 mr-2" />
+                                    <AlertDescription className="font-medium text-pink-700">
+                                        Everything looks good today.
+                                    </AlertDescription>
+                                </Alert>
+
+                                {/* Daily Tip (Fills empty space) */}
+                                <div className="inline-flex items-center gap-2 px-4 py-3 bg-yellow-50/80 border border-yellow-100 rounded-2xl text-yellow-800 text-sm font-medium animate-in fade-in slide-in-from-bottom-3 duration-700 shadow-sm">
+                                    <Lightbulb className="h-4 w-4 text-yellow-600" />
+                                    <span>Tip: {getDailyTip()}</span>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="mt-4 p-6 bg-white/60 backdrop-blur-sm rounded-3xl border border-white shadow-sm">
+                            <h2 className="text-xl font-semibold text-slate-800 mb-2">Start Your Pregnancy Journey</h2>
+                            <p className="text-slate-600 mb-4">Track your pregnancy week by week, monitor vitals, and get personalized insights.</p>
+                            <Button asChild className="rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 border-none shadow-md shadow-pink-200">
+                                <Link href="/pregnancy">
+                                    <Plus className="mr-2 h-4 w-4" /> Start New Pregnancy
+                                </Link>
+                            </Button>
                         </div>
+                    )}
+                </div>
+
+                {pregnancy && (
+                    <div className="md:col-span-4">
+                        <BabyProgressCard week={pregnancyWeek || 1} />
                     </div>
-                </div>
-                <div className="md:col-span-4">
-                    <BabyProgressCard week={pregnancyWeek || 1} />
-                </div>
+                )}
             </div>
 
             <div className="grid gap-8 lg:grid-cols-12 relative z-10">
@@ -67,7 +85,7 @@ export default async function PatientDashboard() {
                 <div className="lg:col-span-8 space-y-8">
 
                     {/* AI Weekly Summary */}
-                    <WeeklySummaryCard />
+                    {pregnancy && <WeeklySummaryCard />}
 
                     {/* Stats Grid */}
                     <div>
@@ -153,7 +171,7 @@ export default async function PatientDashboard() {
                 <div className="lg:col-span-4 space-y-8">
 
                     {/* Daily Checklist */}
-                    <DailyChecklist />
+                    {pregnancy && <DailyChecklist />}
 
                     {/* Quick Actions (Sticky on Mobile, Sidebar on Desktop) */}
                     <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-slate-100 z-50 lg:static lg:bg-transparent lg:border-none lg:p-0 lg:z-auto transition-all duration-300">

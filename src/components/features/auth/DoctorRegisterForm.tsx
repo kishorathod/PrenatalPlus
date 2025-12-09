@@ -210,6 +210,24 @@ export function DoctorRegisterForm() {
                     </div>
 
                     <div className="space-y-2">
+                        <Label htmlFor="hospitalCode" className="text-gray-700 font-medium text-sm flex items-center gap-2">
+                            <Lock className="h-3.5 w-3.5 text-orange-500" />
+                            Hospital Access Code (Optional)
+                        </Label>
+                        <Input
+                            id="hospitalCode"
+                            type="password"
+                            placeholder="Enter code for instant verification"
+                            className="h-11 rounded-xl border-orange-100 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 bg-orange-50/30 hover:border-orange-200 transition-all text-sm"
+                            {...register("hospitalCode")}
+                            disabled={isLoading}
+                        />
+                        <p className="text-[10px] text-gray-400">
+                            Leave blank if you don't have one. Account will require admin approval.
+                        </p>
+                    </div>
+
+                    <div className="space-y-2">
                         <Label htmlFor="password" className="text-gray-700 font-medium text-sm">Password</Label>
                         <div className="relative">
                             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3B82F6]/60" />

@@ -1,104 +1,101 @@
 "use client"
 
-import { VitalSign } from "@/types/vitals.types"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, Edit, Trash2 } from "lucide-react"
+import { Calendar, Edit, Trash2, Heart, Weight as WeightIcon, Activity } from "lucide-react"
 import { format } from "date-fns"
-import { VitalType } from "@prisma/client"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { VitalsForm } from "./VitalsForm"
 
 interface VitalsCardProps {
-  vital: VitalSign
-  onEdit?: (vital: VitalSign) => void
+  vital: any
+  onEdit?: (vital: any) => void
   onDelete?: (id: string) => void
-}
-
-const typeLabels: Record<VitalType, string> = {
-  WEIGHT: "Weight",
-  BLOOD_PRESSURE_SYSTOLIC: "Blood Pressure (Systolic)",
-  BLOOD_PRESSURE_DIASTOLIC: "Blood Pressure (Diastolic)",
-  HEART_RATE: "Heart Rate",
-  TEMPERATURE: "Temperature",
-  BLOOD_SUGAR: "Blood Sugar",
-  SPO2: "SpO2",
-  GLUCOSE: "Glucose",
-  FETAL_MOVEMENT: "Fetal Movement",
-  OTHER: "Other",
 }
 
 export function VitalsCard({ vital, onEdit, onDelete }: VitalsCardProps) {
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this vital sign?")) {
+    if (confirm("Are you sure you want to delete this vital reading?")) {
       onDelete?.(vital.id)
     }
   }
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <CardTitle className="text-lg">{typeLabels[vital.type]}</CardTitle>
-            <CardDescription className="mt-1">
-              <span className="text-2xl font-bold">
-                {vital.value} {vital.unit}
-              </span>
-            </CardDescription>
+            <div className="grid grid-cols-3 gap-4">
+              {/* Blood Pressure */}
+              {(vital.systolic || vital.diastolic) && (
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                    <Heart className="h-5 w-5 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Blood Pressure</p>
+                    <p className="text-lg font-bold">
+                      {vital.systolic}/{vital.diastolic}
+                    </p>
+                    <p className="text-xs text-gray-400">mmHg</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Weight */}
+              {vital.weight && (
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <WeightIcon className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Weight</p>
+                    <p className="text-lg font-bold">{vital.weight}</p>
+                    <p className="text-xs text-gray-400">kg</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Heart Rate */}
+              {vital.heartRate && (
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-full bg-pink-100 flex items-center justify-center">
+                    <Activity className="h-5 w-5 text-pink-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Heart Rate</p>
+                    <p className="text-lg font-bold">{vital.heartRate}</p>
+                    <p className="text-xs text-gray-400">bpm</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+
           <div className="flex gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Edit className="h-4 w-4" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Edit Vital Sign</DialogTitle>
-                  <DialogDescription>
-                    Update vital sign details
-                  </DialogDescription>
-                </DialogHeader>
-                <VitalsForm
-                  vital={vital}
-                  onSuccess={() => onEdit?.(vital)}
-                />
-              </DialogContent>
-            </Dialog>
+            <Button variant="ghost" size="icon" onClick={() => onEdit?.(vital)}>
+              <Edit className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={handleDelete}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center text-sm text-muted-foreground">
+
+        <div className="space-y-1 text-sm text-muted-foreground border-t pt-3">
+          <div className="flex items-center">
             <Calendar className="mr-2 h-4 w-4" />
             {format(new Date(vital.recordedAt), "PPP 'at' p")}
           </div>
           {vital.week && (
-            <div className="text-sm text-muted-foreground">
+            <div className="ml-6">
               Week {vital.week} of pregnancy
             </div>
           )}
           {vital.notes && (
-            <p className="mt-3 text-sm">{vital.notes}</p>
+            <p className="mt-2 ml-6">{vital.notes}</p>
           )}
         </div>
       </CardContent>
     </Card>
   )
 }
-
 
