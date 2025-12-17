@@ -110,11 +110,11 @@ async function main() {
       const pregnancy = await prisma.pregnancy.create({
         data: {
           userId: patient.id,
-          lmpDate,
+
           startDate: lmpDate, // Same as LMP date
-          eddDate: new Date(lmpDate.getTime() + (280 * 24 * 60 * 60 * 1000)), // 280 days
+          dueDate: new Date(lmpDate.getTime() + (280 * 24 * 60 * 60 * 1000)), // 280 days
           currentWeek: weeksPregnant,
-          trimester: weeksPregnant <= 13 ? 1 : weeksPregnant <= 27 ? 2 : 3,
+
           status: 'ACTIVE',
           riskLevel: ['LOW', 'MEDIUM', 'HIGH'][randomInt(0, 2)] as any,
         }
@@ -148,7 +148,7 @@ async function main() {
         data: {
           patientId: patient.id,
           doctorId: assignedDoctor.id,
-          assignedBy: assignedDoctor.id,
+
           consentStatus: 'GRANTED',
           consentGrantedAt: new Date(),
           accessLevel: 'FULL',
