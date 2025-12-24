@@ -41,7 +41,7 @@ export default async function HomePage() {
       )}
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-40 lg:pt-48 lg:pb-52">
+      <section className="relative pt-8 pb-40 lg:pt-16 lg:pb-52">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}

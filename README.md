@@ -61,7 +61,19 @@ A modern, full-featured healthcare application for tracking and managing prenata
 - **MedicalReport** - Document management with categories
 - **PatientAssignment** - Doctor-patient relationships with consent tracking
 - **Notification** - System-wide notification management
-- **AuditLog** - Administrative action tracking
+- [x] Audit Logs - Track all administrative actions
+
+## 📚 Project Documentation
+Detailed documentation for the project's features and workflows:
+
+- [**Feature: Authentication**](documentation/AUTHENTICATION.md) - User roles, registration, and session management.
+- [**Feature: Pregnancy Tracking**](documentation/PREGNANCY_TRACKING.md) - Core pregnancy profile and tracking tools.
+- [**Feature: Vitals & Alerts**](documentation/VITALS_AND_ALERTS.md) - Health monitoring and automated alert system.
+- [**Feature: Appointments**](documentation/APPOINTMENTS.md) - Scheduling and doctor availability.
+- [**Feature: Reports & Labs**](documentation/REPORTS_AND_LABS.md) - Medical document management.
+- [**Feature: Communication**](documentation/COMMUNICATION.md) - Doctor-Patient chat and AI assistant.
+- [**Dashboard Overview**](documentation/DASHBOARD_AND_LANDING.md) - Guide to the Landing Page and secure Dashboards.
+- [**Project Workflow**](documentation/WORKFLOW.md) - Visual diagrams and user journey steps.
 
 ## 🚀 Getting Started
 
