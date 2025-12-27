@@ -32,7 +32,7 @@ export const authOptions: NextAuthConfig = {
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) {
-            throw new Error("Email and password are required")
+            return null
           }
 
           const user = await prisma.user.findUnique({
@@ -56,13 +56,7 @@ export const authOptions: NextAuthConfig = {
 
           // Validate role if expectedRole is provided
           if (credentials.expectedRole && user.role !== (credentials.expectedRole as string)) {
-            const roleNames: Record<string, string> = {
-              'PATIENT': 'patients',
-              'DOCTOR': 'doctors',
-              'ADMIN': 'administrators'
-            }
-            const expectedRoleName = roleNames[credentials.expectedRole as string] || (credentials.expectedRole as string).toLowerCase()
-            throw new Error(`This login page is for ${expectedRoleName} only. Please use the correct login page.`)
+            return null
           }
 
           return {
@@ -74,7 +68,7 @@ export const authOptions: NextAuthConfig = {
           }
         } catch (error) {
           console.error("Authorization error:", error)
-          throw error
+          return null
         }
       },
     }),
