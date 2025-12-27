@@ -42,7 +42,7 @@ export const authOptions: NextAuthConfig = {
           })
 
           if (!user || !user.password) {
-            throw new Error("Invalid email or password")
+            return null
           }
 
           const isPasswordValid = await bcrypt.compare(
@@ -51,7 +51,7 @@ export const authOptions: NextAuthConfig = {
           )
 
           if (!isPasswordValid) {
-            throw new Error("Invalid email or password")
+            return null
           }
 
           // Validate role if expectedRole is provided
