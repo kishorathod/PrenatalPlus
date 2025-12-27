@@ -469,25 +469,25 @@ model DoctorSchedule {
 }
 
 model PatientAssignment {
-  id          String           @id @default(cuid())
-  patientId   String
-  doctorId    String
-  pregnancyId String?          @unique
-  assignedAt  DateTime         @default(now())
-  isPrimary   Boolean          @default(true)
-  status      AssignmentStatus @default(ACTIVE)
-  notes               String?
-  consentStatus       ConsentStatus    @default(GRANTED)
-  consentRequestedAt  DateTime?        @default(now())
-  consentGrantedAt    DateTime?        @default(now())
-  consentRevokedAt    DateTime?
-  accessLevel         AccessLevel      @default(FULL)
-  revokeReason        String?
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-  doctor              User             @relation("DoctorAssignments", fields: [doctorId], references: [id], onDelete: Cascade)
-  patient             User             @relation("PatientAssignments", fields: [patientId], references: [id], onDelete: Cascade)
-  pregnancy           Pregnancy?       @relation(fields: [pregnancyId], references: [id])
+  id                 String           @id @default(cuid())
+  patientId          String
+  doctorId           String
+  pregnancyId        String?          @unique
+  assignedAt         DateTime         @default(now())
+  isPrimary          Boolean          @default(true)
+  status             AssignmentStatus @default(ACTIVE)
+  notes              String?
+  consentStatus      ConsentStatus    @default(GRANTED)
+  consentRequestedAt DateTime?        @default(now())
+  consentGrantedAt   DateTime?        @default(now())
+  consentRevokedAt   DateTime?
+  accessLevel        AccessLevel      @default(FULL)
+  revokeReason       String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  doctor             User             @relation("DoctorAssignments", fields: [doctorId], references: [id], onDelete: Cascade)
+  patient            User             @relation("PatientAssignments", fields: [patientId], references: [id], onDelete: Cascade)
+  pregnancy          Pregnancy?       @relation(fields: [pregnancyId], references: [id])
 
   @@map("patient_assignments")
 }

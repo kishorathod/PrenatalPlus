@@ -21,6 +21,10 @@ export const authOptions: NextAuthConfig = {
   session: {
     strategy: "jwt",
   },
+  pages: {
+    signIn: "/api/force-json",
+    error: "/api/force-json",
+  },
   providers: [
     CredentialsProvider({
       name: "Credentials",
