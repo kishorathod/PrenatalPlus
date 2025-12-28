@@ -5,30 +5,32 @@ import { createReportSchema } from "@/lib/validations/report.validation"
 
 export async function GET(req: NextRequest) {
   try {
-    console.log("[Reports-GET] Checking authentication...");
-    const session = await auth()
-    let userId = session?.user?.id
+    const authHeader = req.headers.get("authorization")
+    let userId: string | undefined
 
-    if (!userId) {
-      const authHeader = req.headers.get("authorization")
-      if (authHeader?.startsWith("Bearer ")) {
-        const token = authHeader.substring(7)
-        try {
-          const decoded = Buffer.from(token, 'base64').toString('utf-8')
-          const userData = JSON.parse(decoded)
-          userId = userData.userId || userData.id
-          console.log("[Reports-GET] Authenticated via Bearer token:", userId);
-        } catch (e) {
-          console.error("[Reports-GET] Token decode error:", e)
-        }
+    // 1. Prioritize Bearer token for Mobile requests
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.substring(7)
+      try {
+        const decoded = Buffer.from(token, 'base64').toString('utf-8')
+        const userData = JSON.parse(decoded)
+        userId = userData.userId || userData.id
+        console.log("[Reports-GET] Authenticated via Bearer token:", userId);
+      } catch (e) {
+        console.error("[Reports-GET] Token decode error:", e)
       }
-    } else {
-      console.log("[Reports-GET] Authenticated via Session:", userId);
+    }
+
+    // 2. Fallback to standard NextAuth session
+    if (!userId) {
+      const session = await auth()
+      userId = session?.user?.id
+      if (userId) console.log("[Reports-GET] Authenticated via Session:", userId);
     }
 
     if (!userId) {
       console.warn("[Reports-GET] Unauthorized access attempt");
-      return NextResponse.json({ error: "Unauthorized: No valid session or token found" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Verify user exists
@@ -92,30 +94,32 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("[Reports-POST] Checking authentication...");
-    const session = await auth()
-    let userId = session?.user?.id
+    const authHeader = req.headers.get("authorization")
+    let userId: string | undefined
 
-    if (!userId) {
-      const authHeader = req.headers.get("authorization")
-      if (authHeader?.startsWith("Bearer ")) {
-        const token = authHeader.substring(7)
-        try {
-          const decoded = Buffer.from(token, 'base64').toString('utf-8')
-          const userData = JSON.parse(decoded)
-          userId = userData.userId || userData.id
-          console.log("[Reports-POST] Authenticated via Bearer token:", userId);
-        } catch (e) {
-          console.error("[Reports-POST] Token decode error:", e);
-        }
+    // 1. Prioritize Bearer token for Mobile requests
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.substring(7)
+      try {
+        const decoded = Buffer.from(token, 'base64').toString('utf-8')
+        const userData = JSON.parse(decoded)
+        userId = userData.userId || userData.id
+        console.log("[Reports-POST] Authenticated via Bearer token:", userId);
+      } catch (e) {
+        console.error("[Reports-POST] Token decode error:", e)
       }
-    } else {
-      console.log("[Reports-POST] Authenticated via Session:", userId);
+    }
+
+    // 2. Fallback to standard NextAuth session
+    if (!userId) {
+      const session = await auth()
+      userId = session?.user?.id
+      if (userId) console.log("[Reports-POST] Authenticated via Session:", userId);
     }
 
     if (!userId) {
       console.warn("[Reports-POST] Unauthorized access attempt");
-      return NextResponse.json({ error: "Unauthorized: No valid session or token found" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({

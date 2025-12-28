@@ -101,14 +101,62 @@ export async function POST(req: NextRequest) {
         email: true,
         name: true,
         role: true,
+        isVerified: true,
       },
     })
+
+    // Auto-create Pregnancy record for patients if due date provided
+    if (userRole === 'PATIENT' && validatedData.expectedDueDate) {
+      try {
+        const dueDate = new Date(validatedData.expectedDueDate)
+        if (!isNaN(dueDate.getTime())) {
+          // Calculate startDate (LMP) = dueDate - 280 days
+          const startDate = new Date(dueDate)
+          startDate.setDate(startDate.getDate() - 280)
+
+          // Calculate current week
+          const diffInMs = new Date().getTime() - startDate.getTime()
+          const diffInWeeks = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 7))
+          const currentWeek = Math.max(1, Math.min(42, diffInWeeks))
+
+          await prisma.pregnancy.create({
+            data: {
+              userId: user.id,
+              startDate,
+              dueDate,
+              currentWeek,
+              status: "ACTIVE",
+              riskLevel: "LOW"
+            }
+          })
+          console.log(`✅ Auto-created pregnancy for user ${user.id} at week ${currentWeek}`)
+        }
+      } catch (pregErr) {
+        console.error("Failed to auto-create pregnancy:", pregErr)
+        // We don't fail the whole registration if pregnancy record creation fails
+      }
+    }
+
+    // Generate session token for mobile auto-login (consistent with mobile-login)
+    const sessionToken = Buffer.from(JSON.stringify({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      timestamp: Date.now()
+    })).toString('base64');
 
     return NextResponse.json(
       {
         success: true,
         message: "User registered successfully",
-        user,
+        token: sessionToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          isVerified: user.isVerified,
+        },
       },
       { status: 201 }
     )

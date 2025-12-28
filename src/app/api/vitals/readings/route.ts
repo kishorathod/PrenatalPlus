@@ -6,30 +6,32 @@ import { generateAlertsFromReading } from "@/lib/utils/vital-alerts"
 
 export async function POST(req: NextRequest) {
     try {
-        console.log("[Vitals-POST] Checking authentication...");
-        const session = await auth()
-        let userId = session?.user?.id
+        const authHeader = req.headers.get("authorization")
+        let userId: string | undefined
 
-        if (!userId) {
-            const authHeader = req.headers.get("authorization")
-            if (authHeader?.startsWith("Bearer ")) {
-                const token = authHeader.substring(7)
-                try {
-                    const decoded = Buffer.from(token, 'base64').toString('utf-8')
-                    const userData = JSON.parse(decoded)
-                    userId = userData.userId || userData.id
-                    console.log("[Vitals-POST] Authenticated via Bearer token:", userId);
-                } catch (e) {
-                    console.error("[Vitals-POST] Token decode error:", e);
-                }
+        // 1. Prioritize Bearer token for Mobile requests
+        if (authHeader?.startsWith("Bearer ")) {
+            const token = authHeader.substring(7)
+            try {
+                const decoded = Buffer.from(token, 'base64').toString('utf-8')
+                const userData = JSON.parse(decoded)
+                userId = userData.userId || userData.id
+                console.log("[Vitals-POST] Authenticated via Bearer token:", userId);
+            } catch (e) {
+                console.error("[Vitals-POST] Token decode error:", e);
             }
-        } else {
-            console.log("[Vitals-POST] Authenticated via Session:", userId);
+        }
+
+        // 2. Fallback to standard NextAuth session
+        if (!userId) {
+            const session = await auth()
+            userId = session?.user?.id
+            if (userId) console.log("[Vitals-POST] Authenticated via Session:", userId);
         }
 
         if (!userId) {
             console.warn("[Vitals-POST] Unauthorized access attempt");
-            return NextResponse.json({ error: "Unauthorized: No valid session or token found" }, { status: 401 })
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
         const user = await prisma.user.findUnique({
@@ -107,30 +109,32 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
     try {
-        console.log("[Vitals-GET] Checking authentication...");
-        const session = await auth()
-        let userId = session?.user?.id
+        const authHeader = req.headers.get("authorization")
+        let userId: string | undefined
 
-        if (!userId) {
-            const authHeader = req.headers.get("authorization")
-            if (authHeader?.startsWith("Bearer ")) {
-                const token = authHeader.substring(7)
-                try {
-                    const decoded = Buffer.from(token, 'base64').toString('utf-8')
-                    const userData = JSON.parse(decoded)
-                    userId = userData.userId || userData.id
-                    console.log("[Vitals-GET] Authenticated via Bearer token:", userId);
-                } catch (e) {
-                    console.error("[Vitals-GET] Token decode error:", e)
-                }
+        // 1. Prioritize Bearer token for Mobile requests
+        if (authHeader?.startsWith("Bearer ")) {
+            const token = authHeader.substring(7)
+            try {
+                const decoded = Buffer.from(token, 'base64').toString('utf-8')
+                const userData = JSON.parse(decoded)
+                userId = userData.userId || userData.id
+                console.log("[Vitals-GET] Authenticated via Bearer token:", userId);
+            } catch (e) {
+                console.error("[Vitals-GET] Token decode error:", e)
             }
-        } else {
-            console.log("[Vitals-GET] Authenticated via Session:", userId);
+        }
+
+        // 2. Fallback to standard NextAuth session
+        if (!userId) {
+            const session = await auth()
+            userId = session?.user?.id
+            if (userId) console.log("[Vitals-GET] Authenticated via Session:", userId);
         }
 
         if (!userId) {
             console.warn("[Vitals-GET] Unauthorized access attempt");
-            return NextResponse.json({ error: "Unauthorized: No valid session or token found" }, { status: 401 })
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
         // Verify user exists in DB to prevent stale session issues

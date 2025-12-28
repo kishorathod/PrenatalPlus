@@ -7,23 +7,32 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
     try {
-        // Auth check (standard for our mobile APIs)
         const authHeader = req.headers.get("authorization");
-        const session = await auth();
-        let userId = session?.user?.id;
+        let userId: string | undefined;
 
-        if (!userId && authHeader?.startsWith("Bearer ")) {
+        // 1. Prioritize Bearer token for Mobile requests
+        if (authHeader && authHeader.startsWith("Bearer ")) {
             const token = authHeader.substring(7);
             try {
                 const decoded = Buffer.from(token, 'base64').toString('utf-8');
                 const userData = JSON.parse(decoded);
                 userId = userData.userId || userData.id;
+                console.log("[Mobile-Doctors] Authenticated via Bearer token:", userId);
             } catch (e) {
+                console.error("[Mobile-Doctors] Token decode error:", e);
                 return NextResponse.json({ error: "Invalid token" }, { status: 401 });
             }
         }
 
+        // 2. Fallback to standard NextAuth session
         if (!userId) {
+            const session = await auth();
+            userId = session?.user?.id;
+            if (userId) console.log("[Mobile-Doctors] Authenticated via Session:", userId);
+        }
+
+        if (!userId) {
+            console.warn("[Mobile-Doctors] Unauthorized access attempt");
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
