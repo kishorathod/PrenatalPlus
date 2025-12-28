@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit
 
     const where: any = {
-      userId: session.user.id,
+      userId: userId,
     }
 
     if (status) {
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     // Check if there's an active pregnancy to link
     const activePregnancy = await prisma.pregnancy.findFirst({
       where: {
-        userId: session.user.id,
+        userId: userId,
         status: "ACTIVE"
       }
     })
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
         doctorId: validatedData.doctorId,
         // Use the fetched doctor details or the ones provided in the form
         doctorName: doctorDetails.doctorName || validatedData.doctorName,
-        userId: session.user.id,
+        userId: userId,
         pregnancyId: activePregnancy?.id,
         doctorAdvice: validatedData.doctorAdvice,
       } as any,

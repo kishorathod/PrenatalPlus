@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit
 
     const where: any = {
-      userId: session.user.id,
+      userId: userId,
     }
 
     if (type) {
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     const report = await prisma.medicalReport.create({
       data: {
         ...validatedData,
-        userId: session.user.id,
+        userId: userId,
       },
     })
 

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
         const doctors = await prisma.user.findMany({
             where: {
                 role: "DOCTOR",
-                isVerified: true, // Only show verified doctors
+                // isVerified: true, // Show all registered doctors for now
             },
             select: {
                 id: true,
