@@ -88,6 +88,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
+        // Verify user exists to avoid FK errors
+        const user = await prisma.user.findUnique({
+            where: { id: userId as string },
+            select: { id: true }
+        })
+
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 401 })
+        }
+
         const body = await req.json()
         const validatedData = createMedicationSchema.parse(body)
 
@@ -108,6 +118,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: error.errors }, { status: 400 })
         }
         console.error("Error creating medication:", error)
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+        return NextResponse.json({
+            error: "Internal server error",
+            details: error.message,
+            code: error.code
+        }, { status: 500 })
     }
 }
