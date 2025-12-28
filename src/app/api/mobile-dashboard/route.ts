@@ -8,35 +8,45 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
     try {
-        // Try standard NextAuth session first
-        const session = await auth();
-        let userId = session?.user?.id;
-        let authMethod = "session";
-
         const authHeader = req.headers.get("authorization");
+        let userId: string | undefined;
 
-        if (!userId) {
-            // Fallback to manual Bearer token for mobile
-            if (!authHeader || !authHeader.startsWith("Bearer ")) {
-                console.log("[Mobile-Dashboard] Unauthorized: No session and no Bearer token");
-                return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-            }
-
+        // 1. Prioritize Bearer token for Mobile requests
+        if (authHeader && authHeader.startsWith("Bearer ")) {
             const token = authHeader.substring(7);
             try {
                 const decoded = Buffer.from(token, 'base64').toString('utf-8');
                 const userData = JSON.parse(decoded);
-                userId = userData.userId || userData.id; // Support both naming variants
-                authMethod = "token";
-                console.log("[Mobile-Dashboard] Decoded user from token:", userId);
+                userId = userData.userId || userData.id;
+                console.log("[Mobile-Dashboard] Using Bearer token for user:", userId);
             } catch (e) {
                 console.error("[Mobile-Dashboard] Token decode error:", e);
                 return NextResponse.json({ error: "Invalid token" }, { status: 401 });
             }
         }
 
+        // 2. Fallback to standard NextAuth session
         if (!userId) {
-            return NextResponse.json({ error: "User ID not found" }, { status: 401 });
+            const session = await auth();
+            userId = session?.user?.id;
+            if (userId) console.log("[Mobile-Dashboard] Using Session for user:", userId);
+        }
+
+        if (!userId) {
+            console.log("[Mobile-Dashboard] Unauthorized: No valid ID found");
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // 3. STRICT VERIFICATION: Ensure user actually exists in the database
+        // This prevents "corrupted" (zeroed) dashboards when using stale tokens after DB resets
+        const userExists = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true, name: true }
+        });
+
+        if (!userExists) {
+            console.warn(`[Mobile-Dashboard] Stale user ID: ${userId}`);
+            return NextResponse.json({ error: "User session expired or invalid. Please log in again." }, { status: 401 });
         }
         const now = new Date();
 
