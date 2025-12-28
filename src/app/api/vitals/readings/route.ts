@@ -6,6 +6,7 @@ import { generateAlertsFromReading } from "@/lib/utils/vital-alerts"
 
 export async function POST(req: NextRequest) {
     try {
+        console.log("[Vitals-POST] Checking authentication...");
         const session = await auth()
         let userId = session?.user?.id
 
@@ -17,21 +18,28 @@ export async function POST(req: NextRequest) {
                     const decoded = Buffer.from(token, 'base64').toString('utf-8')
                     const userData = JSON.parse(decoded)
                     userId = userData.userId || userData.id
-                } catch (e) { }
+                    console.log("[Vitals-POST] Authenticated via Bearer token:", userId);
+                } catch (e) {
+                    console.error("[Vitals-POST] Token decode error:", e);
+                }
             }
+        } else {
+            console.log("[Vitals-POST] Authenticated via Session:", userId);
         }
 
         if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+            console.warn("[Vitals-POST] Unauthorized access attempt");
+            return NextResponse.json({ error: "Unauthorized: No valid session or token found" }, { status: 401 })
         }
 
         const user = await prisma.user.findUnique({
-            where: { id: userId },
+            where: { id: userId as string },
             select: { id: true }
         })
 
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 401 })
+            console.warn(`[Vitals-POST] User not found in DB: ${userId}`);
+            return NextResponse.json({ error: "User not found. Please log in again." }, { status: 401 })
         }
 
         const body = await req.json()
@@ -40,7 +48,7 @@ export async function POST(req: NextRequest) {
         // Get the most recent reading for weight gain comparison
         const previousReading = validatedData.weight
             ? await prisma.vitalReading.findFirst({
-                where: { userId, weight: { not: null } },
+                where: { userId: userId as string, weight: { not: null } },
                 orderBy: { recordedAt: "desc" },
                 select: { weight: true, recordedAt: true },
             })
@@ -56,7 +64,7 @@ export async function POST(req: NextRequest) {
         // Create the vital reading with alerts
         const vitalReading = await prisma.vitalReading.create({
             data: {
-                userId,
+                userId: userId as string,
                 pregnancyId: validatedData.pregnancyId,
                 systolic: validatedData.systolic,
                 diastolic: validatedData.diastolic,
@@ -81,7 +89,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(vitalReading, { status: 201 })
     } catch (error: any) {
-        console.error("Error creating vital reading:", error)
+        console.error("[Vitals-POST] Error:", error)
 
         if (error.name === "ZodError") {
             return NextResponse.json(
@@ -91,7 +99,7 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json(
-            { error: "Internal server error" },
+            { error: "Internal server error", message: error.message },
             { status: 500 }
         )
     }
@@ -99,6 +107,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
     try {
+        console.log("[Vitals-GET] Checking authentication...");
         const session = await auth()
         let userId = session?.user?.id
 
@@ -110,25 +119,28 @@ export async function GET(req: NextRequest) {
                     const decoded = Buffer.from(token, 'base64').toString('utf-8')
                     const userData = JSON.parse(decoded)
                     userId = userData.userId || userData.id
-                    console.log("[Vitals-Readings] Decoded user from token:", userId)
+                    console.log("[Vitals-GET] Authenticated via Bearer token:", userId);
                 } catch (e) {
-                    console.error("[Vitals-Readings] Token decode error:", e)
+                    console.error("[Vitals-GET] Token decode error:", e)
                 }
             }
+        } else {
+            console.log("[Vitals-GET] Authenticated via Session:", userId);
         }
 
         if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+            console.warn("[Vitals-GET] Unauthorized access attempt");
+            return NextResponse.json({ error: "Unauthorized: No valid session or token found" }, { status: 401 })
         }
 
         // Verify user exists in DB to prevent stale session issues
         const user = await prisma.user.findUnique({
-            where: { id: userId },
+            where: { id: userId as string },
             select: { id: true }
         })
 
         if (!user) {
-            console.log("[Vitals-Readings] User not found in DB:", userId)
+            console.warn(`[Vitals-GET] User not found in DB: ${userId}`);
             return NextResponse.json({ error: "User not found. Please log in again." }, { status: 401 })
         }
 
@@ -137,7 +149,7 @@ export async function GET(req: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "50")
         const includeAlerts = searchParams.get("includeAlerts") !== "false"
 
-        const where: any = { userId }
+        const where: any = { userId: userId as string }
         if (pregnancyId) {
             where.pregnancyId = pregnancyId
         }
@@ -171,9 +183,9 @@ export async function GET(req: NextRequest) {
             stats,
         })
     } catch (error: any) {
-        console.error("Error fetching vital readings:", error)
+        console.error("[Vitals-GET] Error:", error)
         return NextResponse.json(
-            { error: "Internal server error" },
+            { error: "Internal server error", message: error.message },
             { status: 500 }
         )
     }

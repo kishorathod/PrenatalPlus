@@ -6,6 +6,7 @@ import { triggerAppointmentEvent } from "@/lib/utils/realtime"
 
 export async function GET(req: NextRequest) {
   try {
+    console.log("[Appointments-GET] Checking authentication...");
     const session = await auth()
     let userId = session?.user?.id
 
@@ -17,24 +18,29 @@ export async function GET(req: NextRequest) {
           const decoded = Buffer.from(token, 'base64').toString('utf-8')
           const userData = JSON.parse(decoded)
           userId = userData.userId || userData.id
+          console.log("[Appointments-GET] Authenticated via Bearer token:", userId);
         } catch (e) {
-          console.error("[Appointments] Token decode error:", e)
+          console.error("[Appointments-GET] Token decode error:", e)
         }
       }
+    } else {
+      console.log("[Appointments-GET] Authenticated via Session:", userId);
     }
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      console.warn("[Appointments-GET] Unauthorized access attempt");
+      return NextResponse.json({ error: "Unauthorized: No valid session or token found" }, { status: 401 })
     }
 
     // Verify user exists in DB
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId as string },
       select: { id: true }
     })
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 })
+      console.warn(`[Appointments-GET] User not found in DB: ${userId}`);
+      return NextResponse.json({ error: "User not found. Please log in again." }, { status: 401 })
     }
 
     const { searchParams } = new URL(req.url)
@@ -93,7 +99,7 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error("Error fetching appointments:", error)
+    console.error("[Appointments-GET] Error:", error)
     return NextResponse.json(
       {
         error: "Internal server error",
@@ -106,6 +112,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("[Appointments-POST] Checking authentication...");
     const session = await auth()
     let userId = session?.user?.id
 
@@ -117,21 +124,28 @@ export async function POST(req: NextRequest) {
           const decoded = Buffer.from(token, 'base64').toString('utf-8')
           const userData = JSON.parse(decoded)
           userId = userData.userId || userData.id
-        } catch (e) { }
+          console.log("[Appointments-POST] Authenticated via Bearer token:", userId);
+        } catch (e) {
+          console.error("[Appointments-POST] Token decode error:", e);
+        }
       }
+    } else {
+      console.log("[Appointments-POST] Authenticated via Session:", userId);
     }
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      console.warn("[Appointments-POST] Unauthorized access attempt");
+      return NextResponse.json({ error: "Unauthorized: No valid session or token found" }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId as string },
       select: { id: true }
     })
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 })
+      console.warn(`[Appointments-POST] User not found in DB: ${userId}`);
+      return NextResponse.json({ error: "User not found. Please log in again." }, { status: 401 })
     }
 
     const body = await req.json()
@@ -156,7 +170,7 @@ export async function POST(req: NextRequest) {
 
     const activePregnancy = await prisma.pregnancy.findFirst({
       where: {
-        userId: userId,
+        userId: userId as string,
         status: "ACTIVE"
       }
     })
@@ -171,13 +185,13 @@ export async function POST(req: NextRequest) {
         location: validatedData.location,
         doctorId: validatedData.doctorId,
         doctorName: doctorDetails.doctorName || validatedData.doctorName,
-        userId: userId,
+        userId: userId as string,
         pregnancyId: activePregnancy?.id,
         doctorAdvice: validatedData.doctorAdvice,
       } as any,
     })
 
-    await triggerAppointmentEvent(userId, "created", appointment)
+    await triggerAppointmentEvent(userId as string, "created", appointment)
 
     return NextResponse.json(appointment, { status: 201 })
   } catch (error: any) {
@@ -191,7 +205,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.error("Error creating appointment:", error)
+    console.error("[Appointments-POST] Error:", error)
     return NextResponse.json(
       { error: error.message || "Internal server error" },
       { status: 500 }
