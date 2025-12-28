@@ -7,12 +7,34 @@ import { triggerAppointmentEvent } from "@/lib/utils/realtime"
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
+    let userId = session?.user?.id
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
+    if (!userId) {
+      const authHeader = req.headers.get("authorization")
+      if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.substring(7)
+        try {
+          const decoded = Buffer.from(token, 'base64').toString('utf-8')
+          const userData = JSON.parse(decoded)
+          userId = userData.userId || userData.id
+        } catch (e) {
+          console.error("[Appointments] Token decode error:", e)
+        }
+      }
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Verify user exists in DB
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 })
     }
 
     const { searchParams } = new URL(req.url)
@@ -46,7 +68,6 @@ export async function GET(req: NextRequest) {
           where.date.lte = d
         }
       }
-      // If no valid dates were added, remove the empty date filter
       if (Object.keys(where.date).length === 0) {
         delete where.date
       }
@@ -77,7 +98,6 @@ export async function GET(req: NextRequest) {
       {
         error: "Internal server error",
         message: error.message,
-        stack: error.stack
       },
       { status: 500 }
     )
@@ -87,23 +107,40 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth()
+    let userId = session?.user?.id
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
+    if (!userId) {
+      const authHeader = req.headers.get("authorization")
+      if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.substring(7)
+        try {
+          const decoded = Buffer.from(token, 'base64').toString('utf-8')
+          const userData = JSON.parse(decoded)
+          userId = userData.userId || userData.id
+        } catch (e) { }
+      }
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 })
     }
 
     const body = await req.json()
     const validatedData = createAppointmentSchema.parse(body)
 
-    // Clean up doctorId - if it's an empty string, set to null/undefined
     if (validatedData.doctorId === "") {
       validatedData.doctorId = undefined
     }
 
-    // If doctorId is provided, fetch doctor details to populate fallback fields
     let doctorDetails: { doctorName?: string } = {}
     if (validatedData.doctorId) {
       const doctor = await prisma.user.findUnique({
@@ -117,7 +154,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Check if there's an active pregnancy to link
     const activePregnancy = await prisma.pregnancy.findFirst({
       where: {
         userId: userId,
@@ -133,9 +169,7 @@ export async function POST(req: NextRequest) {
         date: validatedData.date,
         duration: validatedData.duration,
         location: validatedData.location,
-        // Include doctorId if provided
         doctorId: validatedData.doctorId,
-        // Use the fetched doctor details or the ones provided in the form
         doctorName: doctorDetails.doctorName || validatedData.doctorName,
         userId: userId,
         pregnancyId: activePregnancy?.id,
@@ -143,8 +177,7 @@ export async function POST(req: NextRequest) {
       } as any,
     })
 
-    // Trigger real-time event
-    await triggerAppointmentEvent(session.user.id, "created", appointment)
+    await triggerAppointmentEvent(userId, "created", appointment)
 
     return NextResponse.json(appointment, { status: 201 })
   } catch (error: any) {
@@ -159,11 +192,9 @@ export async function POST(req: NextRequest) {
     }
 
     console.error("Error creating appointment:", error)
-    // Return the actual error message for debugging (in development)
     return NextResponse.json(
       { error: error.message || "Internal server error" },
       { status: 500 }
     )
   }
 }
-

@@ -6,12 +6,34 @@ import { createReportSchema } from "@/lib/validations/report.validation"
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
+    let userId = session?.user?.id
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
+    if (!userId) {
+      const authHeader = req.headers.get("authorization")
+      if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.substring(7)
+        try {
+          const decoded = Buffer.from(token, 'base64').toString('utf-8')
+          const userData = JSON.parse(decoded)
+          userId = userData.userId || userData.id
+        } catch (e) {
+          console.error("[Reports] Token decode error:", e)
+        }
+      }
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Verify user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 })
     }
 
     const { searchParams } = new URL(req.url)
@@ -65,18 +87,35 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth()
+    let userId = session?.user?.id
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
+    if (!userId) {
+      const authHeader = req.headers.get("authorization")
+      if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.substring(7)
+        try {
+          const decoded = Buffer.from(token, 'base64').toString('utf-8')
+          const userData = JSON.parse(decoded)
+          userId = userData.userId || userData.id
+        } catch (e) { }
+      }
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 })
     }
 
     const body = await req.json()
-    console.log("Received report body:", body)
     const validatedData = createReportSchema.parse(body)
-    console.log("Validated data:", validatedData)
 
     const report = await prisma.medicalReport.create({
       data: {
@@ -104,5 +143,3 @@ export async function POST(req: NextRequest) {
     )
   }
 }
-
-

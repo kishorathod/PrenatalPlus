@@ -7,18 +7,35 @@ import { generateAlertsFromReading } from "@/lib/utils/vital-alerts"
 export async function POST(req: NextRequest) {
     try {
         const session = await auth()
+        let userId = session?.user?.id
 
-        if (!session?.user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            )
+        if (!userId) {
+            const authHeader = req.headers.get("authorization")
+            if (authHeader?.startsWith("Bearer ")) {
+                const token = authHeader.substring(7)
+                try {
+                    const decoded = Buffer.from(token, 'base64').toString('utf-8')
+                    const userData = JSON.parse(decoded)
+                    userId = userData.userId || userData.id
+                } catch (e) { }
+            }
+        }
+
+        if (!userId) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true }
+        })
+
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 401 })
         }
 
         const body = await req.json()
         const validatedData = createVitalReadingSchema.parse(body)
-
-        const userId = session.user.id
 
         // Get the most recent reading for weight gain comparison
         const previousReading = validatedData.weight
@@ -83,15 +100,38 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
     try {
         const session = await auth()
+        let userId = session?.user?.id
 
-        if (!session?.user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            )
+        if (!userId) {
+            const authHeader = req.headers.get("authorization")
+            if (authHeader?.startsWith("Bearer ")) {
+                const token = authHeader.substring(7)
+                try {
+                    const decoded = Buffer.from(token, 'base64').toString('utf-8')
+                    const userData = JSON.parse(decoded)
+                    userId = userData.userId || userData.id
+                    console.log("[Vitals-Readings] Decoded user from token:", userId)
+                } catch (e) {
+                    console.error("[Vitals-Readings] Token decode error:", e)
+                }
+            }
         }
 
-        const userId = session.user.id
+        if (!userId) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        // Verify user exists in DB to prevent stale session issues
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true }
+        })
+
+        if (!user) {
+            console.log("[Vitals-Readings] User not found in DB:", userId)
+            return NextResponse.json({ error: "User not found. Please log in again." }, { status: 401 })
+        }
+
         const { searchParams } = new URL(req.url)
         const pregnancyId = searchParams.get("pregnancyId")
         const limit = parseInt(searchParams.get("limit") || "50")
