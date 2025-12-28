@@ -86,4 +86,31 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await auth()
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    await prisma.notification.deleteMany({
+      where: {
+        userId: session.user.id,
+      },
+    })
+
+    return NextResponse.json({ message: "All notifications cleared" })
+  } catch (error: any) {
+    console.error("Error clearing notifications:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
 

@@ -8,7 +8,7 @@ export async function PUT(
 ) {
   try {
     const session = await auth()
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -44,6 +44,48 @@ export async function PUT(
     return NextResponse.json(updated)
   } catch (error: any) {
     console.error("Error updating notification:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth()
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    const notification = await prisma.notification.findFirst({
+      where: {
+        id: params.id,
+        userId: session.user.id,
+      },
+    })
+
+    if (!notification) {
+      return NextResponse.json(
+        { error: "Notification not found" },
+        { status: 404 }
+      )
+    }
+
+    await prisma.notification.delete({
+      where: { id: params.id },
+    })
+
+    return NextResponse.json({ message: "Notification deleted" })
+  } catch (error: any) {
+    console.error("Error deleting notification:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
