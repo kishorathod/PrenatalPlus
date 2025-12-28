@@ -80,7 +80,9 @@ export async function POST(req: NextRequest) {
                 try {
                     const decoded = JSON.parse(Buffer.from(token, "base64").toString())
                     userId = decoded.userId
-                } catch (e) { }
+                } catch (e) {
+                    console.error("[Medications-POST] Auth fallback error:", e)
+                }
             }
         }
 
