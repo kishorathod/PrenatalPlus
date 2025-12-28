@@ -194,6 +194,7 @@ model Appointment {
   reminderSent    Boolean           @default(false)
   reminderTime    DateTime?
   notes           String?
+  doctorAdvice    String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   doctor          User?             @relation("DoctorAppointments", fields: [doctorId], references: [id])

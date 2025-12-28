@@ -12,6 +12,7 @@ export const createAppointmentSchema = z.object({
   duration: z.number().int().positive().default(30),
   pregnancyId: z.string().optional(),
   reminderTime: z.coerce.date().optional(),
+  doctorAdvice: z.string().optional(),
 })
 
 export const updateAppointmentSchema = z.object({
@@ -25,6 +26,7 @@ export const updateAppointmentSchema = z.object({
   duration: z.number().int().positive().optional(),
   status: z.nativeEnum(AppointmentStatus).optional(),
   notes: z.string().optional(),
+  doctorAdvice: z.string().optional(),
 })
 
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>

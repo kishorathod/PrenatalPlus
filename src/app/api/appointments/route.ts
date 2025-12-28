@@ -125,6 +125,7 @@ export async function POST(req: NextRequest) {
         doctorName: doctorDetails.doctorName || validatedData.doctorName,
         userId: session.user.id,
         pregnancyId: activePregnancy?.id,
+        doctorAdvice: validatedData.doctorAdvice,
       },
     })
 
