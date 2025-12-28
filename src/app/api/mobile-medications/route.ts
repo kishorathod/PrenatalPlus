@@ -69,58 +69,57 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        try {
-            const authHeader = req.headers.get("authorization")
-            let userId: string | undefined
+        const authHeader = req.headers.get("authorization")
+        let userId: string | undefined
 
-            // 1. Prioritize Bearer token for Mobile requests
-            if (authHeader?.startsWith("Bearer ")) {
-                const token = authHeader.substring(7)
-                try {
-                    const decoded = JSON.parse(Buffer.from(token, "base64").toString())
-                    userId = decoded.userId
-                    console.log("[Medications-POST] Using Bearer token for user:", userId);
-                } catch (e) {
-                    console.error("[Medications-POST] Auth fallback error:", e)
-                }
+        // 1. Prioritize Bearer token for Mobile requests
+        if (authHeader?.startsWith("Bearer ")) {
+            const token = authHeader.substring(7)
+            try {
+                const decoded = JSON.parse(Buffer.from(token, "base64").toString())
+                userId = decoded.userId
+                console.log("[Medications-POST] Using Bearer token for user:", userId);
+            } catch (e) {
+                console.error("[Medications-POST] Auth fallback error:", e)
             }
-
-            // 2. Fallback to standard NextAuth session
-            if (!userId) {
-                const session = await auth()
-                userId = session?.user?.id
-            }
-
-            if (!userId) {
-                return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-            }
-
-            console.log("[Medications-POST] Attempting to create for userId:", userId);
-
-            const body = await req.json()
-            const validatedData = createMedicationSchema.parse(body)
-
-            const medication = await prisma.medicationReminder.create({
-                data: {
-                    userId,
-                    name: validatedData.name,
-                    dosage: validatedData.dosage,
-                    frequency: validatedData.frequency,
-                    timeOfDay: validatedData.timeOfDay,
-                    startDate: validatedData.startDate ? new Date(validatedData.startDate) : new Date(),
-                }
-            })
-
-            return NextResponse.json(medication)
-        } catch (error: any) {
-            if (error instanceof z.ZodError) {
-                return NextResponse.json({ error: error.errors }, { status: 400 })
-            }
-            console.error("Error creating medication:", error)
-            return NextResponse.json({
-                error: "Internal server error",
-                details: error.message,
-                code: error.code
-            }, { status: 500 })
         }
+
+        // 2. Fallback to standard NextAuth session
+        if (!userId) {
+            const session = await auth()
+            userId = session?.user?.id
+        }
+
+        if (!userId) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        console.log("[Medications-POST] Attempting to create for userId:", userId);
+
+        const body = await req.json()
+        const validatedData = createMedicationSchema.parse(body)
+
+        const medication = await prisma.medicationReminder.create({
+            data: {
+                userId,
+                name: validatedData.name,
+                dosage: validatedData.dosage,
+                frequency: validatedData.frequency,
+                timeOfDay: validatedData.timeOfDay,
+                startDate: validatedData.startDate ? new Date(validatedData.startDate) : new Date(),
+            }
+        })
+
+        return NextResponse.json(medication)
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json({ error: error.errors }, { status: 400 })
+        }
+        console.error("Error creating medication:", error)
+        return NextResponse.json({
+            error: "Internal server error",
+            details: error.message,
+            code: error.code
+        }, { status: 500 })
     }
+}
