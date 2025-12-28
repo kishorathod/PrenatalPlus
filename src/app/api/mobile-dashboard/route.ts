@@ -1,33 +1,42 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/server/auth";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
     try {
-        // Extract and decode Bearer token
+        // Try standard NextAuth session first
+        const session = await auth();
+        let userId = session?.user?.id;
+        let authMethod = "session";
+
         const authHeader = req.headers.get("authorization");
 
-        console.log("[Mobile-Dashboard] Auth header:", authHeader ? "Present" : "Missing");
+        if (!userId) {
+            // Fallback to manual Bearer token for mobile
+            if (!authHeader || !authHeader.startsWith("Bearer ")) {
+                console.log("[Mobile-Dashboard] Unauthorized: No session and no Bearer token");
+                return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            }
 
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            console.log("[Mobile-Dashboard] Unauthorized: No Bearer token");
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            const token = authHeader.substring(7);
+            try {
+                const decoded = Buffer.from(token, 'base64').toString('utf-8');
+                const userData = JSON.parse(decoded);
+                userId = userData.userId || userData.id; // Support both naming variants
+                authMethod = "token";
+                console.log("[Mobile-Dashboard] Decoded user from token:", userId);
+            } catch (e) {
+                console.error("[Mobile-Dashboard] Token decode error:", e);
+                return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+            }
         }
 
-        const token = authHeader.substring(7);
-        console.log("[Mobile-Dashboard] Token length:", token.length);
-
-        let userData;
-        try {
-            const decoded = Buffer.from(token, 'base64').toString('utf-8');
-            userData = JSON.parse(decoded);
-            console.log("[Mobile-Dashboard] Decoded user:", userData.userId, userData.email);
-        } catch (e) {
-            console.error("[Mobile-Dashboard] Token decode error:", e);
-            return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+        if (!userId) {
+            return NextResponse.json({ error: "User ID not found" }, { status: 401 });
         }
-
-        const userId = userData.userId;
         const now = new Date();
 
         // Fetch dashboard statistics
@@ -39,18 +48,18 @@ export async function GET(req: NextRequest) {
             activePregnancy,
             recentAppointments,
             recentVitals,
+            recentNotifications,
         ] = await Promise.all([
             // Total appointments
             prisma.appointment.count({
                 where: { userId },
             }),
-            // Upcoming appointments (next 7 days)
+            // Upcoming appointments
             prisma.appointment.count({
                 where: {
                     userId,
                     date: {
                         gte: now,
-                        lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
                     },
                     status: {
                         in: ["SCHEDULED", "CONFIRMED"],
@@ -58,7 +67,7 @@ export async function GET(req: NextRequest) {
                 },
             }),
             // Total vitals
-            prisma.vitalSign.count({
+            prisma.vitalReading.count({
                 where: { userId },
             }),
             // Total reports
@@ -107,6 +116,21 @@ export async function GET(req: NextRequest) {
                     recordedAt: true,
                 },
             }),
+            // Recent notifications (last 5)
+            prisma.notification.findMany({
+                where: { userId },
+                take: 5,
+                orderBy: { createdAt: "desc" },
+                select: {
+                    id: true,
+                    title: true,
+                    message: true,
+                    type: true,
+                    priority: true,
+                    read: true,
+                    createdAt: true,
+                },
+            }),
         ]);
 
         return NextResponse.json({
@@ -121,6 +145,7 @@ export async function GET(req: NextRequest) {
             recent: {
                 appointments: recentAppointments,
                 vitals: recentVitals,
+                notifications: recentNotifications,
             },
         });
     } catch (error: any) {
