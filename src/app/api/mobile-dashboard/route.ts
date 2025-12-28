@@ -161,7 +161,11 @@ export async function GET(req: NextRequest) {
                 totalReports,
                 hasActivePregnancy: !!activePregnancy,
             },
-            pregnancy: activePregnancy,
+            pregnancy: activePregnancy ? {
+                ...activePregnancy,
+                currentWeek: activePregnancy.currentWeek, // Ensure it's passed
+                babySize: activePregnancy ? getWeekInfo(activePregnancy.currentWeek)?.babySize : null
+            } : null,
             healthTip,
             recent: {
                 appointments: recentAppointments,
