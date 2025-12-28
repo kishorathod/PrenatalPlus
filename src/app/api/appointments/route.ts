@@ -35,10 +35,20 @@ export async function GET(req: NextRequest) {
     if (startDate || endDate) {
       where.date = {}
       if (startDate) {
-        where.date.gte = new Date(startDate)
+        const d = new Date(startDate)
+        if (!isNaN(d.getTime())) {
+          where.date.gte = d
+        }
       }
       if (endDate) {
-        where.date.lte = new Date(endDate)
+        const d = new Date(endDate)
+        if (!isNaN(d.getTime())) {
+          where.date.lte = d
+        }
+      }
+      // If no valid dates were added, remove the empty date filter
+      if (Object.keys(where.date).length === 0) {
+        delete where.date
       }
     }
 
