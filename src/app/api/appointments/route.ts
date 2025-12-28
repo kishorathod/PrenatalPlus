@@ -113,13 +113,14 @@ export async function POST(req: NextRequest) {
 
     const appointment = await prisma.appointment.create({
       data: {
-        // Exclude doctorId because it's not in the DB yet
         title: validatedData.title,
         description: validatedData.description,
         type: validatedData.type,
         date: validatedData.date,
         duration: validatedData.duration,
         location: validatedData.location,
+        // Include doctorId if provided
+        doctorId: validatedData.doctorId,
         // Use the fetched doctor details or the ones provided in the form
         doctorName: doctorDetails.doctorName || validatedData.doctorName,
         userId: session.user.id,

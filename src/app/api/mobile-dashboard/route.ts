@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/server/auth";
+import { weeklyPregnancyData, getWeekInfo } from "@/lib/pregnancy-data";
 
 export const dynamic = "force-dynamic";
 
@@ -133,6 +134,25 @@ export async function GET(req: NextRequest) {
             }),
         ]);
 
+        // Determine Health Tip
+        let healthTip = {
+            title: "Daily Health Tip",
+            message: "Stay hydrated! Drinking enough water helps maintain amniotic fluid levels. 👶"
+        };
+
+        if (activePregnancy) {
+            const weekInfo = getWeekInfo(activePregnancy.currentWeek);
+            if (weekInfo && weekInfo.tips.length > 0) {
+                // Pick a tip - for simplicity, use the first one or rotate based on day
+                const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+                const tipIndex = dayOfYear % weekInfo.tips.length;
+                healthTip = {
+                    title: `Week ${activePregnancy.currentWeek} Tip`,
+                    message: weekInfo.tips[tipIndex]
+                };
+            }
+        }
+
         return NextResponse.json({
             stats: {
                 totalAppointments,
@@ -142,6 +162,7 @@ export async function GET(req: NextRequest) {
                 hasActivePregnancy: !!activePregnancy,
             },
             pregnancy: activePregnancy,
+            healthTip,
             recent: {
                 appointments: recentAppointments,
                 vitals: recentVitals,
