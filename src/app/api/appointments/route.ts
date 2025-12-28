@@ -8,18 +8,6 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth()
 
-    // DIAGNOSTIC: Check columns directly from the server-side connection
-    try {
-      const dbColumns = await prisma.$queryRaw`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'appointments'
-      ` as any[];
-      console.log("SERVER SIDE COLUMNS:", dbColumns.map(c => c.column_name).join(", "));
-    } catch (e) {
-      console.error("DIAGNOSTIC FAILED:", e);
-    }
-
     if (!session?.user) {
       return NextResponse.json(
         { error: "Unauthorized" },

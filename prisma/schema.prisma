@@ -45,6 +45,7 @@ model User {
   patientLabTests      LabTestRequest[]        @relation("PatientLabTests")
   doctorNotes          MedicalNote[]           @relation("DoctorNotes")
   patientNotes         MedicalNote[]           @relation("PatientNotes")
+  moodEntries          MoodEntry[]
   reports              MedicalReport[]
   medicationReminders  MedicationReminder[]
   sentMessages         Message[]               @relation("SentMessages")
@@ -79,6 +80,7 @@ model Pregnancy {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   appointments        Appointment[]
+  moodEntries         MoodEntry[]
   contractionSessions ContractionSession[]
   contractions        Contraction[]
   kickCounts          KickCount[]
@@ -202,6 +204,19 @@ model Appointment {
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("appointments")
+}
+
+model MoodEntry {
+  id          String    @id @default(cuid())
+  userId      String
+  pregnancyId String?
+  mood        Mood
+  note        String?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pregnancy   Pregnancy? @relation(fields: [pregnancyId], references: [id])
+
+  @@map("mood_entries")
 }
 
 model VitalSign {
@@ -724,4 +739,12 @@ enum AIRole {
   USER
   ASSISTANT
   SYSTEM
+}
+
+enum Mood {
+  GREAT
+  GOOD
+  NEUTRAL
+  TIRED
+  SAD
 }
