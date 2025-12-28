@@ -64,7 +64,11 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error("Error fetching appointments:", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        message: error.message,
+        stack: error.stack
+      },
       { status: 500 }
     )
   }
@@ -126,7 +130,7 @@ export async function POST(req: NextRequest) {
         userId: session.user.id,
         pregnancyId: activePregnancy?.id,
         doctorAdvice: validatedData.doctorAdvice,
-      },
+      } as any,
     })
 
     // Trigger real-time event
