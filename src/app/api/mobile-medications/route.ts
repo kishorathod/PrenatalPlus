@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
 export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 const createMedicationSchema = z.object({
     name: z.string().min(1),
@@ -26,21 +27,31 @@ export async function GET(req: NextRequest) {
                 try {
                     const decoded = JSON.parse(Buffer.from(token, "base64").toString())
                     userId = decoded.userId
+                    console.log("[Medications-GET] Using Bearer token for user:", userId)
                 } catch (e) {
-                    console.error("[Medications] Auth fallback error:", e)
+                    console.error("[Medications-GET] Auth fallback error:", e)
                 }
             }
         }
 
         if (!userId) {
+            console.error("[Medications-GET] No userId found")
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
+
+        console.log("[Medications-GET] Fetching for userId:", userId)
 
         const todayStart = new Date()
         todayStart.setHours(0, 0, 0, 0)
 
         const todayEnd = new Date()
         todayEnd.setHours(23, 59, 59, 999)
+
+        // Debug: Check total medications for this user (without isActive filter)
+        const totalMedications = await prisma.medicationReminder.count({
+            where: { userId }
+        })
+        console.log("[Medications-GET] Total medications in DB for user:", totalMedications)
 
         const medications = await prisma.medicationReminder.findMany({
             where: {
@@ -59,6 +70,9 @@ export async function GET(req: NextRequest) {
             },
             orderBy: { createdAt: "desc" }
         })
+
+        console.log("[Medications-GET] Found medications:", medications.length)
+        console.log("[Medications-GET] Medications data:", JSON.stringify(medications, null, 2))
 
         return NextResponse.json({ medications })
     } catch (error) {
@@ -97,6 +111,7 @@ export async function POST(req: NextRequest) {
         console.log("[Medications-POST] Attempting to create for userId:", userId);
 
         const body = await req.json()
+        console.log("[Medications-POST] Request body:", body);
         const validatedData = createMedicationSchema.parse(body)
 
         const medication = await prisma.medicationReminder.create({
@@ -110,9 +125,12 @@ export async function POST(req: NextRequest) {
             }
         })
 
+        console.log("[Medications-POST] Created medication:", JSON.stringify(medication, null, 2));
+
         return NextResponse.json(medication)
     } catch (error: any) {
         if (error instanceof z.ZodError) {
+            console.error("[Medications-POST] Validation error:", error.errors);
             return NextResponse.json({ error: error.errors }, { status: 400 })
         }
         console.error("Error creating medication:", error)
